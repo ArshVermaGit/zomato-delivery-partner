@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, FlatList, TouchableOpacity } from 'react-native';
+import { colors } from '@zomato/design-tokens';
+import { Button } from '@zomato/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
@@ -213,12 +215,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     incentiveBanner: {
-        backgroundColor: '#FFF0F1',
-        padding: 16,
+        padding: 20,
         borderRadius: 12,
         marginBottom: 16,
         borderWidth: 1,
         borderColor: '#FFCDD2',
+        backgroundColor: colors.secondary.white,
     },
     incTitle: {
         fontSize: 16,
@@ -229,7 +231,18 @@ const styles = StyleSheet.create({
     incSub: {
         fontSize: 12,
         color: '#333',
-    }
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.secondary.gray_900,
+        marginBottom: 10,
+    },
+    subtitle: {
+        fontSize: 16,
+        color: colors.secondary.gray_600,
+        marginBottom: 20,
+    },
 });
 
 export default HomeScreen;
