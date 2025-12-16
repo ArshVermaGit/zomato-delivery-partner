@@ -1,62 +1,105 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Clock, HelpCircle, FileText, Smartphone } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import Animated, { ZoomIn } from 'react-native-reanimated';
+import { Clock, CheckCircle, XCircle, Check, X } from 'lucide-react-native';
+import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 
-const VerificationStatusScreen = () => {
-    // In a real app, this screen would poll status or listen to push notifications
-    const steps = [
-        { icon: FileText, title: 'Documents Uploaded', status: 'done' },
-        { icon: Smartphone, title: 'Background Check', status: 'in_progress' },
-        { icon: Clock, title: 'Account Activation', status: 'pending' },
+export const VerificationStatusScreen = () => {
+    const navigation = useNavigation<any>();
+    const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+
+    const documents = [
+        { key: 'doc1', name: 'Profile Photo', status: 'approved' },
+        { key: 'doc2', name: 'Driver\'s License', status: 'approved' },
+        { key: 'doc3', name: 'Aadhaar Card', status: 'approved' },
+        { key: 'doc4', name: 'Vehicle RC', status: 'approved' },
+        { key: 'doc5', name: 'Bank Proof', status: 'approved' },
     ];
+
+    const statusConfig = {
+        pending: {
+            icon: <Clock size={64} color={colors.semantic.warning} />,
+            color: colors.semantic.warning,
+            bgColor: colors.semantic.warning_light,
+            title: 'Verification in Progress',
+            description: "We're reviewing your documents. This usually takes 24-48 hours.",
+        },
+        approved: {
+            icon: <CheckCircle size={64} color={colors.semantic.success} />,
+            color: colors.semantic.success,
+            bgColor: colors.semantic.success_light,
+            title: 'Verification Approved!',
+            description: 'Congratulations! You can now start accepting orders and earning.',
+        },
+        rejected: {
+            icon: <XCircle size={64} color={colors.semantic.error} />,
+            color: colors.semantic.error,
+            bgColor: colors.semantic.error_light,
+            title: 'Verification Rejected',
+            description: 'Some documents need to be re-uploaded. Please check the details below.',
+        },
+    };
+
+    const config = statusConfig[status];
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.centerContent}>
-                <View style={styles.statusIcon}>
-                    <Clock size={48} color="#FF9800" />
-                </View>
+            <ScrollView contentContainerStyle={styles.content}>
+                {/* Status Icon */}
+                <Animated.View
+                    entering={ZoomIn.duration(400)}
+                    style={[styles.iconContainer, { backgroundColor: config.bgColor }]}
+                >
+                    {config.icon}
+                </Animated.View>
 
-                <Text style={styles.title}>Verification in Progress</Text>
-                <Text style={styles.subtitle}>
-                    Thanks for submitting your details. verification usually takes 24-48 hours.
-                </Text>
+                {/* Title & Description */}
+                <Text style={styles.title}>{config.title}</Text>
+                <Text style={styles.description}>{config.description}</Text>
 
-                <View style={styles.stepsContainer}>
-                    {steps.map((step, index) => {
-                        const Icon = step.icon;
-                        const isDone = step.status === 'done';
-                        const isInProgress = step.status === 'in_progress';
-
-                        return (
-                            <View key={index} style={styles.stepItem}>
+                {/* Document Status List */}
+                <View style={styles.documentsList}>
+                    {documents.map((doc) => (
+                        <View key={doc.key} style={styles.documentStatusItem}>
+                            <View style={styles.documentStatusLeft}>
                                 <View style={[
-                                    styles.stepIcon,
-                                    isDone && styles.stepIconDone,
-                                    isInProgress && styles.stepIconProgress
+                                    styles.statusIcon,
+                                    { backgroundColor: doc.status === 'approved' ? colors.semantic.success_light : colors.semantic.error_light }
                                 ]}>
-                                    <Icon size={20} color={isDone ? '#FFF' : (isInProgress ? '#FF9800' : '#CCC')} />
+                                    {doc.status === 'approved' ? (
+                                        <Check size={16} color={colors.semantic.success} />
+                                    ) : (
+                                        <X size={16} color={colors.semantic.error} />
+                                    )}
                                 </View>
-                                <View style={styles.stepContent}>
-                                    <Text style={styles.stepTitle}>{step.title}</Text>
-                                    <Text style={styles.stepStatus}>
-                                        {isDone ? 'Completed' : (isInProgress ? 'In Progress' : 'Pending')}
-                                    </Text>
-                                </View>
+                                <Text style={styles.documentName}>{doc.name}</Text>
                             </View>
-                        );
-                    })}
+                            {/* Logic for individual doc re-upload if needed, based on status='rejected' */}
+                        </View>
+                    ))}
                 </View>
-            </View>
 
-            <View style={styles.footer}>
-                <Text style={styles.footerText}>We will notify you via SMS once approved.</Text>
-                <TouchableOpacity style={styles.helpButton}>
-                    <HelpCircle size={20} color="#E23744" />
-                    <Text style={styles.helpText}>Need Help?</Text>
-                </TouchableOpacity>
-            </View>
+                {/* Action Button */}
+                {status === 'approved' && (
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => navigation.navigate('Main')}
+                    >
+                        <Text style={styles.buttonText}>Start Earning Now</Text>
+                    </TouchableOpacity>
+                )}
+
+                {status === 'rejected' && (
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => navigation.navigate('DocumentUpload')}
+                    >
+                        <Text style={styles.buttonText}>Re-upload Documents</Text>
+                    </TouchableOpacity>
+                )}
+            </ScrollView>
         </SafeAreaView>
     );
 };
@@ -64,96 +107,79 @@ const VerificationStatusScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFF',
+        backgroundColor: colors.secondary.white,
     },
-    centerContent: {
-        flex: 1,
-        padding: 32,
+    content: {
+        padding: spacing['2xl'],
         alignItems: 'center',
+        paddingTop: spacing['5xl'],
     },
-    statusIcon: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#FFF3E0',
+    iconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        alignItems: 'center',
         justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 24,
-        marginTop: 40,
+        marginBottom: spacing.xl,
     },
     title: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#1C1C1C',
+        ...typography.h2,
+        color: colors.secondary.gray_900,
         textAlign: 'center',
-        marginBottom: 12,
+        marginBottom: spacing.sm,
     },
-    subtitle: {
-        fontSize: 16,
-        color: '#666',
+    description: {
+        ...typography.body_large,
+        color: colors.secondary.gray_600,
         textAlign: 'center',
-        lineHeight: 22,
-        marginBottom: 40,
+        marginBottom: spacing['2xl'],
+        lineHeight: 24,
     },
-    stepsContainer: {
+    documentsList: {
         width: '100%',
+        backgroundColor: colors.secondary.gray_50,
+        borderRadius: borderRadius.lg,
+        padding: spacing.base,
+        marginBottom: spacing['2xl'],
     },
-    stepItem: {
-        flexDirection: 'row',
-        marginBottom: 24,
-    },
-    stepIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F5F5F5',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    stepIconDone: {
-        backgroundColor: '#4CAF50',
-    },
-    stepIconProgress: {
-        backgroundColor: '#FFF3E0',
-        borderWidth: 1,
-        borderColor: '#FF9800',
-    },
-    stepContent: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    stepTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-    },
-    stepStatus: {
-        fontSize: 14,
-        color: '#888',
-        marginTop: 2,
-    },
-    footer: {
-        padding: 24,
-        borderTopWidth: 1,
-        borderTopColor: '#EEE',
-        alignItems: 'center',
-    },
-    footerText: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 16,
-    },
-    helpButton: {
+    documentStatusItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: spacing.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.secondary.gray_200,
     },
-    helpText: {
-        color: '#E23744',
+    documentStatusLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.md,
+    },
+    statusIcon: {
+        width: 24,
+        height: 24,
+        borderRadius: borderRadius.full,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    documentName: {
+        ...typography.body_medium,
+        color: colors.secondary.gray_800,
+        fontWeight: '500',
+    },
+    button: {
+        backgroundColor: colors.primary.zomato_red,
+        width: '100%',
+        height: 48,
+        borderRadius: borderRadius.lg,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: colors.secondary.white,
         fontSize: 16,
         fontWeight: '600',
-        marginLeft: 8,
-    },
+    }
 });
 
 export default VerificationStatusScreen;
