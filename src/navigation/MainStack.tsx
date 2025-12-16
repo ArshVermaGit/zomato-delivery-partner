@@ -2,10 +2,12 @@ import { createStackNavigator, CardStyleInterpolators, HeaderStyleInterpolators,
 import { TabNavigator } from './TabNavigator';
 import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
 import { PayoutScreen } from '../screens/earnings/PayoutScreen';
+import { IncentivesScreen } from '../screens/earnings/IncentivesScreen';
+import { PerformanceScreen } from '../screens/performance/PerformanceScreen';
+import { SafetyCenterScreen } from '../screens/safety/SafetyCenterScreen';
 import {
-    IncentivesScreen, PerformanceScreen,
     MyDetailsScreen, VehicleDetailsScreen, DocumentsScreen,
-    HelpSupportScreen, SafetyCenterScreen, SOSScreen,
+    HelpSupportScreen, SOSScreen,
     AccidentReportScreen
 } from '../screens/Placeholders';
 
