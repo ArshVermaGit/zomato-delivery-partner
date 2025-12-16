@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Receipt, Banknote, User } from 'lucide-react-native';
 import { colors, typography, shadows } from '@zomato/design-tokens';
-import HomeScreen from '../screens/home/HomeScreen';
+import { DeliveryHomeScreen } from '../screens/home/HomeScreen';
 import OrdersListScreen from '../screens/orders/OrdersListScreen';
 import EarningsScreen from '../screens/earnings/EarningsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
@@ -50,7 +50,7 @@ export const TabNavigator = () => {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home" component={DeliveryHomeScreen} />
             <Tab.Screen name="Orders" component={OrdersListScreen} />
             <Tab.Screen name="Earnings" component={EarningsScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
