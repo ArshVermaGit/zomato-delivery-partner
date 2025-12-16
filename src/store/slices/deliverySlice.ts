@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { OrderService } from '../../services/OrderService';
 
 export interface Location {
     lat: number;
@@ -152,47 +153,7 @@ const initialState: DeliveryState = {
     },
     activeOrder: null,
     incomingOrder: null,
-    availableOrders: [
-        // Mock Data for Available Orders
-        {
-            id: 'ORD-5566',
-            restaurantName: 'Pizza Hut',
-            restaurantAddress: 'Sector 18, Noida',
-            restaurantPhone: '1234567890',
-            customerName: 'Aman Gupta',
-            customerAddress: 'Sector 16, Noida',
-            customerPhone: '0987654321',
-            status: 'ACCEPTED',
-            pickupLocation: 'Sec 18',
-            dropLocation: 'Sec 16',
-            items: [{ name: 'Pepperoni Pizza', quantity: 1 }],
-            pickupOTP: '1111',
-            deliveryOTP: '2222',
-            amount: 85,
-            distanceToPickup: '2.5 km',
-            distanceToDrop: '4.0 km',
-            estimatedTime: '25'
-        },
-        {
-            id: 'ORD-9988',
-            restaurantName: 'KFC',
-            restaurantAddress: 'DLF Mall, Noida',
-            restaurantPhone: '1234567890',
-            customerName: 'Priya Singh',
-            customerAddress: 'Sector 25, Noida',
-            customerPhone: '0987654321',
-            status: 'ACCEPTED',
-            pickupLocation: 'DLF Mall',
-            dropLocation: 'Sec 25',
-            items: [{ name: 'Bucket Meal', quantity: 1 }],
-            pickupOTP: '3333',
-            deliveryOTP: '4444',
-            amount: 110,
-            distanceToPickup: '1.2 km',
-            distanceToDrop: '3.5 km',
-            estimatedTime: '30'
-        }
-    ],
+    availableOrders: [],
     orderHistory: [],
     transactions: [
         { id: 'TXN-1', date: 'Today, 2:30 PM', type: 'ORDER', amount: 85, description: 'Order #ORD-5566' },
@@ -261,6 +222,22 @@ const initialState: DeliveryState = {
         ]
     }
 };
+
+export const fetchAvailableOrders = createAsyncThunk(
+    'delivery/fetchAvailableOrders',
+    async (location: Location) => {
+        const orders = await OrderService.getAvailableOrders(location.lat, location.lng);
+        return orders;
+    }
+);
+
+export const acceptOrderThunk = createAsyncThunk(
+    'delivery/acceptOrder',
+    async (orderId: string) => {
+        await OrderService.acceptOrder(orderId);
+        return orderId;
+    }
+);
 
 const deliverySlice = createSlice({
     name: 'delivery',
@@ -343,6 +320,18 @@ const deliverySlice = createSlice({
                 });
             }
         }
+    },
+    extraReducers: (builder) => {
+        builder.addCase(fetchAvailableOrders.fulfilled, (state, action) => {
+            state.availableOrders = action.payload as ActiveOrder[];
+        });
+        builder.addCase(acceptOrderThunk.fulfilled, (state, action) => {
+            const orderIndex = state.availableOrders.findIndex(o => o.id === action.payload);
+            if (orderIndex !== -1 && !state.activeOrder) {
+                state.activeOrder = state.availableOrders[orderIndex];
+                state.availableOrders.splice(orderIndex, 1);
+            }
+        });
     }
 });
 
