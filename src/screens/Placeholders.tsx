@@ -26,12 +26,9 @@ const styles = StyleSheet.create({
     },
 });
 
-export const IncentivesScreen = () => <PlaceholderScreen name="Incentives" />;
-export const PerformanceScreen = () => <PlaceholderScreen name="Performance" />;
 export const MyDetailsScreen = () => <PlaceholderScreen name="My Details" />;
 export const VehicleDetailsScreen = () => <PlaceholderScreen name="Vehicle Details" />;
 export const DocumentsScreen = () => <PlaceholderScreen name="Documents" />;
 export const HelpSupportScreen = () => <PlaceholderScreen name="Help & Support" />;
-export const SafetyCenterScreen = () => <PlaceholderScreen name="Safety Center" />;
 export const SOSScreen = () => <PlaceholderScreen name="SOS" />;
 export const AccidentReportScreen = () => <PlaceholderScreen name="Accident Report" />;
