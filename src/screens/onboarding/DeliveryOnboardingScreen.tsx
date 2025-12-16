@@ -6,7 +6,8 @@ import Animated, {
     withSpring,
     useAnimatedScrollHandler,
     interpolate,
-    Extrapolate
+    Extrapolate,
+    SharedValue
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, DollarSign, Shield, ChevronRight, Briefcase } from 'lucide-react-native';
@@ -15,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const AnimatedDot = ({ index, scrollX }: { index: number, scrollX: Animated.SharedValue<number> }) => {
+const AnimatedDot = ({ index, scrollX }: { index: number, scrollX: SharedValue<number> }) => {
     const animatedStyle = useAnimatedStyle(() => {
         const inputRange = [(index - 1) * SCREEN_WIDTH, index * SCREEN_WIDTH, (index + 1) * SCREEN_WIDTH];
         const width = interpolate(
