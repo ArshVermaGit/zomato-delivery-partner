@@ -10,7 +10,7 @@ const Stack = createStackNavigator();
 
 const OnboardingStack = () => {
     return (
-        <Stack.Navigator screenOptions={{ headerTitle: '', headerBackTitleVisible: false, headerTintColor: '#1C1C1C' }}>
+        <Stack.Navigator screenOptions={{ headerTitle: '', headerTintColor: '#1C1C1C' }}>
             <Stack.Screen
                 name="OnboardingWelcome"
                 component={DeliveryOnboardingScreen}
