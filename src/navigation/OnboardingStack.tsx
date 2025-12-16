@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import OnboardingWelcomeScreen from '../screens/onboarding/OnboardingWelcomeScreen';
+import { DeliveryOnboardingScreen } from '../screens/onboarding/DeliveryOnboardingScreen';
 import DocumentUploadScreen from '../screens/onboarding/DocumentUploadScreen';
 import VehicleDetailsScreen from '../screens/onboarding/VehicleDetailsScreen';
 import BankDetailsScreen from '../screens/onboarding/BankDetailsScreen';
@@ -13,7 +13,7 @@ const OnboardingStack = () => {
         <Stack.Navigator screenOptions={{ headerTitle: '', headerBackTitleVisible: false, headerTintColor: '#1C1C1C' }}>
             <Stack.Screen
                 name="OnboardingWelcome"
-                component={OnboardingWelcomeScreen}
+                component={DeliveryOnboardingScreen}
                 options={{ headerShown: false }}
             />
             <Stack.Screen
