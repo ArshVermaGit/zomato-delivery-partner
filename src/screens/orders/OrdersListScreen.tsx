@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { RootState } from '../../store';
-import { acceptAvailableOrder, ActiveOrder } from '../../store/slices/deliverySlice';
+import { RootState, AppDispatch } from '../../store';
+import { acceptAvailableOrder, ActiveOrder, fetchAvailableOrders, acceptOrderThunk } from '../../store/slices/deliverySlice';
 import { OrderCard } from '../../components/orders/OrderCard';
 import { colors, typography, shadows } from '@zomato/design-tokens';
 
@@ -12,21 +12,34 @@ type TabType = 'available' | 'active' | 'completed';
 
 const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>(); // Typed dispatch
     const [activeTab, setActiveTab] = useState<TabType>('active');
     const [refreshing, setRefreshing] = useState(false);
     const [completedFilter, setCompletedFilter] = useState('Today');
 
-    const { availableOrders, activeOrder, orderHistory } = useSelector((state: RootState) => state.delivery);
+    const { availableOrders, activeOrder, orderHistory, location } = useSelector((state: RootState) => state.delivery);
+
+    // Fetch orders on mount
+    useEffect(() => {
+        if (location) {
+            dispatch(fetchAvailableOrders(location));
+        }
+    }, [dispatch, location]);
 
     const onRefresh = () => {
         setRefreshing(true);
-        // Simulate refresh
-        setTimeout(() => setRefreshing(false), 1000);
+        if (location) {
+            dispatch(fetchAvailableOrders(location))
+                .unwrap()
+                .then(() => setRefreshing(false))
+                .catch(() => setRefreshing(false));
+        } else {
+            setRefreshing(false);
+        }
     };
 
     const handleAccept = (id: string) => {
-        dispatch(acceptAvailableOrder(id));
+        dispatch(acceptOrderThunk(id));
         setActiveTab('active');
     };
 
