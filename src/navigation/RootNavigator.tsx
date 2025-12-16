@@ -12,7 +12,23 @@ import { RootState } from '../store';
 
 import { DeliverySplashScreen } from '../screens/splash/DeliverySplashScreen';
 
-const Stack = createStackNavigator();
+const RootStack = createStackNavigator();
+
+const linking = {
+    prefixes: ['zomatodelivery://'],
+    config: {
+        screens: {
+            MainStack: {
+                screens: {
+                    Home: 'home',
+                    Orders: 'orders',
+                    Earnings: 'earnings',
+                    Profile: 'profile',
+                },
+            },
+        },
+    },
+};
 
 const RootNavigator = () => {
     const { isAuthenticated, onboardingStatus } = useSelector((state: RootState) => state.auth);
@@ -31,16 +47,16 @@ const RootNavigator = () => {
 
     return (
         <>
-            <NavigationContainer linking={linking}>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <NavigationContainer linking={linking as any}>
+                <RootStack.Navigator screenOptions={{ headerShown: false }}>
                     {!isAuthenticated ? (
-                        <Stack.Screen name="Auth" component={AuthStack} />
+                        <RootStack.Screen name="Auth" component={AuthStack} />
                     ) : onboardingStatus !== 'APPROVED' ? (
-                        <Stack.Screen name="Onboarding" component={OnboardingStack} />
+                        <RootStack.Screen name="DeliveryOnboarding" component={OnboardingStack} />
                     ) : (
-                        <Stack.Screen name="Main" component={MainStack} />
+                        <RootStack.Screen name="MainStack" component={MainStack} />
                     )}
-                </Stack.Navigator>
+                </RootStack.Navigator>
             </NavigationContainer>
             <IncomingOrderModal />
         </>
