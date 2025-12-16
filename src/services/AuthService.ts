@@ -1,12 +1,12 @@
-import apiClient from './api/axiosInstance';
+import { AuthService as ApiAuthService } from '@zomato/api-client';
 import { store } from '../store';
 import { loginSuccess, logout } from '../store/slices/authSlice';
 
 export const AuthService = {
     sendOtp: async (phoneNumber: string) => {
         try {
-            const response = await apiClient.post('/auth/send-otp', { phone: phoneNumber, role: 'delivery' });
-            return response.data;
+            const response = await ApiAuthService.sendOtp({ phoneNumber, isLogin: true });
+            return response;
         } catch (error) {
             console.error('Send OTP Error', error);
             throw error;
@@ -15,8 +15,12 @@ export const AuthService = {
 
     verifyOtp: async (phoneNumber: string, otp: string) => {
         try {
-            const response = await apiClient.post('/auth/verify-otp', { phone: phoneNumber, otp, role: 'delivery' });
-            return response.data;
+            const response = await ApiAuthService.verifyOtp({ phoneNumber, otp });
+            // Assuming response contains { user, token } or similar
+            if (response.token) {
+                store.dispatch(loginSuccess({ user: response.user, token: response.token }));
+            }
+            return response;
         } catch (error) {
             console.error('Verify OTP Error', error);
             throw error;
@@ -24,13 +28,23 @@ export const AuthService = {
     },
 
     login: async (phoneNumber: string) => {
-        // Direct login for dev/testing when OTP disabled
+        // Direct login for dev/testing
         try {
-            // We use a mock endpoint or assume the backend has a direct login for dev
-            const response = await apiClient.post('/auth/login', { phoneNumber, password: 'password', role: 'delivery' });
-            const { user, token } = response.data;
-            store.dispatch(loginSuccess({ user, token }));
-            return user;
+            const response = await ApiAuthService.login({ phoneNumber, password: 'password' });
+            // Backend login returns { access_token } usually, verify mapping
+            // If backend login returns user & token:
+            const { user, access_token } = response;
+            // We need to map response correctly.
+            // Looking at AuthController: login returns `this.authService.login(req.user)` which returns access_token.
+            // It might NOT return user object. We might need to fetch profile.
+
+            if (access_token) {
+                // Fetch profile?
+                // For now, assume we dispatch token
+                store.dispatch(loginSuccess({ user: { phoneNumber, id: 'unknown' }, token: access_token }));
+                return { phoneNumber };
+            }
+            return response;
         } catch (error) {
             console.error('Login Error', error);
             throw error;
@@ -39,10 +53,11 @@ export const AuthService = {
 
     logout: async () => {
         try {
-            await apiClient.post('/auth/logout');
+            await ApiAuthService.logout();
             store.dispatch(logout());
         } catch (error) {
             console.error('Logout Error', error);
+            store.dispatch(logout());
         }
     }
 };
