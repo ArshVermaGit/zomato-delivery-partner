@@ -38,6 +38,9 @@ export interface ActiveOrder {
     pickupOTP: string;
     deliveryOTP: string;
     amount: number;
+    distanceToPickup?: string;
+    distanceToDrop?: string;
+    estimatedTime?: string;
 }
 
 export interface Incentive {
@@ -165,7 +168,10 @@ const initialState: DeliveryState = {
             items: [{ name: 'Pepperoni Pizza', quantity: 1 }],
             pickupOTP: '1111',
             deliveryOTP: '2222',
-            amount: 85
+            amount: 85,
+            distanceToPickup: '2.5 km',
+            distanceToDrop: '4.0 km',
+            estimatedTime: '25'
         },
         {
             id: 'ORD-9988',
@@ -181,7 +187,10 @@ const initialState: DeliveryState = {
             items: [{ name: 'Bucket Meal', quantity: 1 }],
             pickupOTP: '3333',
             deliveryOTP: '4444',
-            amount: 110
+            amount: 110,
+            distanceToPickup: '1.2 km',
+            distanceToDrop: '3.5 km',
+            estimatedTime: '30'
         }
     ],
     orderHistory: [],
