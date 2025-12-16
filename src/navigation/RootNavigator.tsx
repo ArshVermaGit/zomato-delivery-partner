@@ -10,6 +10,8 @@ import MainStack from './MainStack';
 import IncomingOrderModal from '../components/orders/IncomingOrderModal';
 import { RootState } from '../store';
 
+import { DeliverySplashScreen } from '../screens/splash/DeliverySplashScreen';
+
 const Stack = createStackNavigator();
 
 const RootNavigator = () => {
@@ -24,12 +26,7 @@ const RootNavigator = () => {
     }, []);
 
     if (isLoading) {
-        return (
-            <View style={{ flex: 1, backgroundColor: '#E23744', justifyContent: 'center', alignItems: 'center' }}>
-                {/* Splash Logo would go here */}
-                <ActivityIndicator color="white" size="large" />
-            </View>
-        );
+        return <DeliverySplashScreen onFinish={() => setIsLoading(false)} />;
     }
 
     return (
