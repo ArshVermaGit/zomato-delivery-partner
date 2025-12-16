@@ -1,115 +1,153 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../store';
 import { useNavigation } from '@react-navigation/native';
-import { acceptAvailableOrder } from '../../store/slices/deliverySlice';
+import { RootState } from '../../store';
+import { acceptAvailableOrder, ActiveOrder } from '../../store/slices/deliverySlice';
+import { OrderCard } from '../../components/orders/OrderCard';
+import { colors, typography, shadows } from '@zomato/design-tokens';
 
-import OrderHistoryCard from '../../components/orders/OrderHistoryCard';
-import BottomTabNav from '../../components/navigation/BottomTabNav';
-
-type TabType = 'Available' | 'Active' | 'Completed';
+type TabType = 'available' | 'active' | 'completed';
 
 const OrdersListScreen = () => {
     const navigation = useNavigation<any>();
     const dispatch = useDispatch();
-    const [activeTab, setActiveTab] = useState<TabType>('Available');
+    const [activeTab, setActiveTab] = useState<TabType>('active');
+    const [refreshing, setRefreshing] = useState(false);
+    const [completedFilter, setCompletedFilter] = useState('Today');
 
-    // Selectors
     const { availableOrders, activeOrder, orderHistory } = useSelector((state: RootState) => state.delivery);
 
-    const handleAccept = (id: string) => {
-        if (activeOrder) {
-            Alert.alert('Limit Reached', 'You already have an active order. Finish it before accepting another.');
-            return;
-        }
-        dispatch(acceptAvailableOrder(id));
-        navigation.navigate('Home'); // Go to dashboard to see it
+    const onRefresh = () => {
+        setRefreshing(true);
+        // Simulate refresh
+        setTimeout(() => setRefreshing(false), 1000);
     };
 
-    const renderContent = () => {
-        if (activeTab === 'Available') {
-            return (
-                <FlatList
-                    data={availableOrders}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <View>
-                            <OrderHistoryCard
-                                order={item}
-                                showStatus={false}
-                                onPress={() => { }}
-                            />
-                            <TouchableOpacity
-                                style={styles.acceptBtn}
-                                onPress={() => handleAccept(item.id)}
-                            >
-                                <Text style={styles.acceptText}>Accept Order</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No nearby orders.</Text>}
-                />
-            );
-        }
+    const handleAccept = (id: string) => {
+        dispatch(acceptAvailableOrder(id));
+        setActiveTab('active');
+    };
 
-        if (activeTab === 'Active') {
-            return (
-                <View style={styles.listContent}>
-                    {activeOrder ? (
-                        <OrderHistoryCard
-                            order={activeOrder}
-                            onPress={() => navigation.navigate('OrderDetail')}
-                        />
-                    ) : (
-                        <Text style={styles.emptyText}>No active orders.</Text>
-                    )}
-                </View>
-            );
+    const getOrders = () => {
+        switch (activeTab) {
+            case 'available':
+                return availableOrders;
+            case 'active':
+                return activeOrder ? [activeOrder] : [];
+            case 'completed':
+                // Simple filter logic could go here
+                return orderHistory;
+            default:
+                return [];
         }
+    };
 
-        if (activeTab === 'Completed') {
-            return (
-                <FlatList
-                    data={orderHistory}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => <OrderHistoryCard order={item} />}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No completed orders yet.</Text>}
-                />
-            );
-        }
+    const orders = getOrders();
+
+    const counts = {
+        available: availableOrders.length,
+        active: activeOrder ? 1 : 0,
     };
 
     return (
-        <View style={styles.container}>
-            <SafeAreaView edges={['top']} style={styles.header}>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <View style={styles.header}>
                 <Text style={styles.headerTitle}>Orders</Text>
-            </SafeAreaView>
+            </View>
 
             {/* Tabs */}
-            <View style={styles.tabContainer}>
-                {(['Available', 'Active', 'Completed'] as TabType[]).map((tab) => (
-                    <TouchableOpacity
-                        key={tab}
-                        style={[styles.tab, activeTab === tab && styles.activeTab]}
-                        onPress={() => setActiveTab(tab)}
-                    >
-                        <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
-                    </TouchableOpacity>
-                ))}
+            <View style={styles.tabs}>
+                <TabButton
+                    active={activeTab === 'available'}
+                    onPress={() => setActiveTab('available')}
+                >
+                    Available ({counts.available})
+                </TabButton>
+                <TabButton
+                    active={activeTab === 'active'}
+                    onPress={() => setActiveTab('active')}
+                >
+                    Active ({counts.active})
+                </TabButton>
+                <TabButton
+                    active={activeTab === 'completed'}
+                    onPress={() => setActiveTab('completed')}
+                >
+                    History
+                </TabButton>
             </View>
 
-            <View style={styles.content}>
-                {renderContent()}
-            </View>
+            {/* Filters (for completed) */}
+            {activeTab === 'completed' && (
+                <View style={styles.filters}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
+                        {['Today', 'This Week', 'This Month', 'Custom'].map((filter) => (
+                            <FilterChip
+                                key={filter}
+                                active={completedFilter === filter}
+                                onPress={() => setCompletedFilter(filter)}
+                            >
+                                {filter}
+                            </FilterChip>
+                        ))}
+                    </ScrollView>
+                </View>
+            )}
 
-            <BottomTabNav />
-        </View>
+            {/* Orders List */}
+            <FlatList
+                data={orders}
+                renderItem={({ item }) => (
+                    <OrderCard
+                        order={item}
+                        type={activeTab}
+                        onPress={() => navigation.navigate('OrderDetail', { orderId: item.id })}
+                        onAccept={() => handleAccept(item.id)}
+                    />
+                )}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.list}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                ListEmptyComponent={<EmptyState type={activeTab} />}
+            />
+        </SafeAreaView>
     );
 };
+
+// Sub-components
+const TabButton = ({ active, onPress, children }: { active: boolean; onPress: () => void; children: React.ReactNode }) => (
+    <TouchableOpacity
+        style={[styles.tabButton, active && styles.activeTabButton]}
+        onPress={onPress}
+    >
+        <Text style={[styles.tabText, active && styles.activeTabText]}>
+            {children}
+        </Text>
+    </TouchableOpacity>
+);
+
+const FilterChip = ({ active, onPress, children }: { active: boolean; onPress: () => void; children: React.ReactNode }) => (
+    <TouchableOpacity
+        style={[styles.filterChip, active && styles.activeFilterChip]}
+        onPress={onPress}
+    >
+        <Text style={[styles.filterText, active && styles.activeFilterText]}>
+            {children}
+        </Text>
+    </TouchableOpacity>
+);
+
+const EmptyState = ({ type }: { type: string }) => (
+    <View style={styles.emptyState}>
+        <Text style={styles.emptyText}>
+            {type === 'available' ? 'No new orders nearby' :
+                type === 'active' ? 'No active orders' :
+                    'No completed orders found'}
+        </Text>
+    </View>
+);
 
 const styles = StyleSheet.create({
     container: {
@@ -117,64 +155,83 @@ const styles = StyleSheet.create({
         backgroundColor: '#F8F9FA',
     },
     header: {
-        backgroundColor: '#FFF',
         paddingHorizontal: 16,
         paddingBottom: 16,
+        backgroundColor: '#FFF',
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
         color: '#1C1C1C',
     },
-    tabContainer: {
+    tabs: {
         flexDirection: 'row',
-        backgroundColor: '#FFF',
         paddingHorizontal: 16,
         paddingBottom: 12,
+        backgroundColor: '#FFF',
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
     },
-    tab: {
+    tabButton: {
         marginRight: 24,
-        paddingBottom: 8,
-    },
-    activeTab: {
+        paddingVertical: 8,
         borderBottomWidth: 2,
-        borderBottomColor: '#E23744',
+        borderBottomColor: 'transparent',
+    },
+    activeTabButton: {
+        borderBottomColor: colors.primary.zomato_red,
     },
     tabText: {
         fontSize: 16,
-        color: '#888',
         fontWeight: '600',
+        color: '#888',
     },
     activeTabText: {
-        color: '#E23744',
+        color: colors.primary.zomato_red,
         fontWeight: '700',
     },
-    content: {
-        flex: 1,
+    filters: {
+        backgroundColor: '#FFF',
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F0F0F0',
     },
-    listContent: {
+    filtersContent: {
+        paddingHorizontal: 16,
+    },
+    filterChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        backgroundColor: '#F5F5F5',
+        marginRight: 10,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    activeFilterChip: {
+        backgroundColor: '#FFF0F0',
+        borderColor: colors.primary.zomato_red,
+    },
+    filterText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#666',
+    },
+    activeFilterText: {
+        color: colors.primary.zomato_red,
+    },
+    list: {
         padding: 16,
     },
-    emptyText: {
-        textAlign: 'center',
-        marginTop: 40,
-        color: '#888',
-        fontSize: 16,
-    },
-    acceptBtn: {
-        backgroundColor: '#2FB050',
-        padding: 12,
-        borderRadius: 8,
+    emptyState: {
+        padding: 40,
         alignItems: 'center',
-        marginTop: -8,
-        marginBottom: 16,
     },
-    acceptText: {
-        color: '#FFF',
-        fontWeight: '700',
-    }
+    emptyText: {
+        fontSize: 16,
+        color: '#888',
+        fontWeight: '500',
+    },
 });
 
 export default OrdersListScreen;
