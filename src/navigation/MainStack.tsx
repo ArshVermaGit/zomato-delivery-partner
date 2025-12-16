@@ -1,5 +1,14 @@
 import { createStackNavigator, CardStyleInterpolators, HeaderStyleInterpolators, TransitionSpecs } from '@react-navigation/stack';
 import { TabNavigator } from './TabNavigator';
+import OrderDetailScreen from '../screens/orders/OrderDetailScreen';
+import { PayoutScreen } from '../screens/earnings/PayoutScreen';
+import {
+    IncentivesScreen, PerformanceScreen,
+    MyDetailsScreen, VehicleDetailsScreen, DocumentsScreen,
+    HelpSupportScreen, SafetyCenterScreen, SOSScreen,
+    AccidentReportScreen
+} from '../screens/Placeholders';
+
 
 // ... other imports ...
 
