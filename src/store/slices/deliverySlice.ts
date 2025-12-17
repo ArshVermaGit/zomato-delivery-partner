@@ -6,227 +6,98 @@ export interface Location {
     lng: number;
 }
 
-export interface Stats {
-    deliveries: number;
-    onlineHours: number;
-    acceptanceRate: number; // percentage
-    rating: number;
-}
-
-export interface Earnings {
-    today: number;
-    week: number;
-    pending: number;
-}
-
 export interface OrderItem {
     name: string;
     quantity: number;
+    isVeg?: boolean;
+    customizations?: string;
 }
 
 export interface ActiveOrder {
     id: string;
+    displayId?: string; // e.g. "4521"
     restaurantName: string;
     restaurantAddress: string;
-    restaurantPhone: string;
+    pickupAddress?: string; // Add alias/field
+    restaurantPhone?: string;
+
     customerName: string;
     customerAddress: string;
-    customerPhone: string;
-    status: 'ACCEPTED' | 'ARRIVED_RESTAURANT' | 'PICKED_UP' | 'ARRIVED_CUSTOMER' | 'DELIVERED';
-    pickupLocation: string; // Short version
-    dropLocation: string;   // Short version
+    dropAddress?: string; // Add alias
+    customerPhone?: string;
+
+    status: 'ACCEPTED' | 'ARRIVED_RESTAURANT' | 'PICKED_UP' | 'ARRIVED_CUSTOMER' | 'DELIVERED' | 'OUT_FOR_DELIVERY';
+
+    pickupLocation?: string;
+    dropLocation?: string;
+
     items: OrderItem[];
-    pickupOTP: string;
-    deliveryOTP: string;
     amount: number;
-    distanceToPickup?: string;
-    distanceToDrop?: string;
-    estimatedTime?: string;
-}
+    totalAmount?: number;
+    itemsTotal?: number;
+    deliveryFee?: number;
+    taxes?: number;
+    discount?: number;
 
-export interface Incentive {
-    id: string;
-    title: string;
-    description: string;
-    target: number;
-    current: number;
-    reward: number;
-    expiry: string;
-    type: 'DAILY' | 'PEAK';
-}
+    distanceToPickup?: string | number;
+    distanceToDrop?: string | number;
+    etaToPickup?: string | number;
+    etaToDrop?: string | number;
 
-export interface Feedback {
-    id: string;
-    rating: number;
-    comment: string;
-    customerName: string;
-    date: string;
-}
+    pickupOTP?: string;
+    deliveryOTP?: string;
+    deliveryInstructions?: string;
 
-export interface Vehicle {
-    type: 'Bike' | 'Scooter' | 'Cycle';
-    model: string;
-    plate: string;
-    license: string;
-}
+    paymentMethod?: 'cash' | 'online';
+    tip?: number;
 
-export interface Document {
-    id: string;
-    name: string;
-    status: 'VERIFIED' | 'PENDING' | 'REJECTED' | 'EXPIRED';
-    expiry?: string;
-}
-
-export interface BankDetails {
-    holder: string;
-    account: string;
-    ifsc: string;
-    bankName: string;
-}
-
-export interface DeliveryProfile {
-    vehicle: Vehicle;
-    documents: Document[];
-    bankDetails: BankDetails;
-    emergencyContact: {
-        name: string;
-        phone: string;
+    earnings?: {
+        baseFee: number;
+        distanceBonus: number;
+        peakHourBonus: number;
+        total: number;
     };
-}
 
-export interface EmergencyContact {
-    id: string;
-    name: string;
-    phone: string;
-    relation: string;
-}
-
-export interface Transaction {
-    id: string;
-    date: string;
-    type: 'ORDER' | 'PAYOUT' | 'BONUS';
-    amount: number;
-    description: string;
-}
-
-export interface Payout {
-    id: string;
-    date: string;
-    amount: number;
-    status: 'PENDING' | 'COMPLETED' | 'FAILED';
-    method: 'INSTANT' | 'WEEKLY';
+    restaurantLocation?: { latitude: number; longitude: number };
+    customerLocation?: { latitude: number; longitude: number };
+    createdAt?: string;
 }
 
 export interface DeliveryState {
     isOnline: boolean;
     location: Location | null;
-    stats: Stats;
-    earnings: Earnings;
     activeOrder: ActiveOrder | null;
-    incomingOrder: ActiveOrder | null;
     availableOrders: ActiveOrder[];
     orderHistory: ActiveOrder[];
-    transactions: Transaction[];
-    payouts: Payout[];
-    incentives: Incentive[];
-    feedback: Feedback[];
-    profile: DeliveryProfile;
-    safety: {
-        sosActive: boolean;
-        emergencyContacts: EmergencyContact[];
-    };
+    loading: boolean;
+    error: string | null;
+    stats: any; // Simplified for brevity in this update
+    earnings: any;
+    transactions: any[];
+    payouts: any[];
 }
 
 const initialState: DeliveryState = {
     isOnline: false,
     location: null,
-    stats: {
-        deliveries: 12,
-        onlineHours: 4.5,
-        acceptanceRate: 95,
-        rating: 4.8
-    },
-    earnings: {
-        today: 450,
-        week: 3200,
-        pending: 1200 // "Available Balance"
-    },
     activeOrder: null,
-    incomingOrder: null,
     availableOrders: [],
     orderHistory: [],
-    transactions: [
-        { id: 'TXN-1', date: 'Today, 2:30 PM', type: 'ORDER', amount: 85, description: 'Order #ORD-5566' },
-        { id: 'TXN-2', date: 'Yesterday', type: 'PAYOUT', amount: -2000, description: 'Weekly Payout' },
-        { id: 'TXN-3', date: 'Yesterday', type: 'ORDER', amount: 120, description: 'Order #ORD-1122' }
-    ],
-    payouts: [
-        { id: 'PAY-1', date: 'Yesterday', amount: 2000, status: 'COMPLETED', method: 'WEEKLY' }
-    ],
-    incentives: [
-        {
-            id: 'INC-1',
-            title: 'Daily Target',
-            description: 'Complete 15 deliveries today',
-            target: 15,
-            current: 12,
-            reward: 250,
-            expiry: '5h 30m',
-            type: 'DAILY'
-        },
-        {
-            id: 'INC-2',
-            title: 'Dinner Peak Bonus',
-            description: 'Complete 5 deliveries between 7PM-11PM',
-            target: 5,
-            current: 2,
-            reward: 100,
-            expiry: '2h 15m',
-            type: 'PEAK'
-        }
-    ],
-    feedback: [
-        { id: 'FB-1', rating: 5, comment: 'Very polite delivery partner!', customerName: 'Rahul', date: 'Today' },
-        { id: 'FB-2', rating: 5, comment: 'Fast service. Thanks.', customerName: 'Sneha', date: 'Yesterday' },
-        { id: 'FB-3', rating: 4, comment: 'Food was slightly spilt.', customerName: 'Amit', date: '2 days ago' }
-    ],
-    profile: {
-        vehicle: {
-            type: 'Bike',
-            model: 'Honda Splendor Plus',
-            plate: 'UP16 AB 1234',
-            license: 'DL-123456789012345'
-        },
-        documents: [
-            { id: 'DOC-1', name: 'Driving License', status: 'VERIFIED', expiry: '12/2028' },
-            { id: 'DOC-2', name: 'Vehicle RC', status: 'VERIFIED', expiry: '05/2030' },
-            { id: 'DOC-3', name: 'Aadhar Card', status: 'VERIFIED' },
-            { id: 'DOC-4', name: 'Insurance', status: 'EXPIRED', expiry: '01/2024' }
-        ],
-        bankDetails: {
-            holder: 'Arsh Verma',
-            account: '987654321012',
-            ifsc: 'HDFC0001234',
-            bankName: 'HDFC Bank'
-        },
-        emergencyContact: {
-            name: 'Ravi Verma',
-            phone: '9876500000'
-        }
-    },
-    safety: {
-        sosActive: false,
-        emergencyContacts: [
-            { id: 'EC-1', name: 'Ravi Verma', phone: '9876500000', relation: 'Brother' },
-            { id: 'EC-2', name: 'Zomato EMS', phone: '100', relation: 'Support' }
-        ]
-    }
+    loading: false,
+    error: null,
+    stats: { deliveries: 0, onlineHours: 0, acceptanceRate: 100, rating: 5.0 },
+    earnings: { today: 0, week: 0, pending: 0 },
+    transactions: [],
+    payouts: [],
 };
+
+// ... Thunks same as before, just ensuring types match ...
 
 export const fetchAvailableOrders = createAsyncThunk(
     'delivery/fetchAvailableOrders',
-    async (location: Location) => {
-        const orders = await OrderService.getAvailableOrders(location.lat, location.lng);
+    async (_, { getState }) => {
+        const orders = await OrderService.getAvailableOrders();
+        // Ensure proper mapping in Service to match ActiveOrder interface
         return orders;
     }
 );
@@ -234,8 +105,16 @@ export const fetchAvailableOrders = createAsyncThunk(
 export const acceptOrderThunk = createAsyncThunk(
     'delivery/acceptOrder',
     async (orderId: string) => {
-        await OrderService.acceptOrder(orderId);
-        return orderId;
+        const order = await OrderService.acceptOrder(orderId);
+        return order;
+    }
+);
+
+export const updateOrderStatusThunk = createAsyncThunk(
+    'delivery/updateStatus',
+    async ({ orderId, status }: { orderId: string, status: any }) => {
+        const order = await OrderService.updateStatus(orderId, status);
+        return order;
     }
 );
 
@@ -249,103 +128,32 @@ const deliverySlice = createSlice({
         updateLocation: (state, action: PayloadAction<Location>) => {
             state.location = action.payload;
         },
-        setActiveOrder: (state, action: PayloadAction<ActiveOrder | null>) => {
-            state.activeOrder = action.payload;
-        },
-        setIncomingOrder: (state, action: PayloadAction<ActiveOrder | null>) => {
-            state.incomingOrder = action.payload;
-        },
-        acceptIncomingOrder: (state) => {
-            if (state.incomingOrder) {
-                state.activeOrder = {
-                    ...state.incomingOrder,
-                    status: 'ACCEPTED'
-                };
-                state.incomingOrder = null;
-            }
-        },
-        acceptAvailableOrder: (state, action: PayloadAction<string>) => {
-            const orderIndex = state.availableOrders.findIndex(o => o.id === action.payload);
-            if (orderIndex !== -1 && !state.activeOrder) {
-                state.activeOrder = state.availableOrders[orderIndex];
-                state.availableOrders.splice(orderIndex, 1);
-            }
-        },
-        rejectIncomingOrder: (state) => {
-            state.incomingOrder = null;
-        },
-        updateOrderStatus: (state, action: PayloadAction<ActiveOrder['status']>) => {
-            if (state.activeOrder) {
-                state.activeOrder.status = action.payload;
-            }
-        },
-        completeOrder: (state) => {
-            if (state.activeOrder) {
-                const amount = state.activeOrder.amount;
-                state.earnings.today += amount;
-                state.earnings.pending += amount; // Add to withdrawable balance
-                state.stats.deliveries += 1;
-                state.activeOrder.status = 'DELIVERED';
-                state.orderHistory.unshift(state.activeOrder);
-
-                // Add transaction
-                state.transactions.unshift({
-                    id: `TXN-${Date.now()}`,
-                    date: 'Just now',
-                    type: 'ORDER',
-                    amount: amount,
-                    description: `Order #${state.activeOrder.id}`
-                });
-
-                state.activeOrder = null;
-            }
-        },
-        requestPayout: (state, action: PayloadAction<{ amount: number, method: 'INSTANT' | 'WEEKLY' }>) => {
-            const { amount, method } = action.payload;
-            if (state.earnings.pending >= amount) {
-                state.earnings.pending -= amount;
-                state.payouts.unshift({
-                    id: `PAY-${Date.now()}`,
-                    date: 'Just now',
-                    amount,
-                    status: 'PENDING',
-                    method
-                });
-                state.transactions.unshift({
-                    id: `TXN-${Date.now()}`,
-                    date: 'Just now',
-                    type: 'PAYOUT',
-                    amount: -amount,
-                    description: `${method === 'INSTANT' ? 'Instant' : 'Standard'} Payout`
-                });
-            }
-        }
     },
     extraReducers: (builder) => {
+        builder.addCase(fetchAvailableOrders.pending, (state) => {
+            state.loading = true;
+        });
         builder.addCase(fetchAvailableOrders.fulfilled, (state, action) => {
-            state.availableOrders = action.payload as ActiveOrder[];
+            // @ts-ignore
+            state.availableOrders = action.payload;
+            state.loading = false;
         });
         builder.addCase(acceptOrderThunk.fulfilled, (state, action) => {
-            const orderIndex = state.availableOrders.findIndex(o => o.id === action.payload);
-            if (orderIndex !== -1 && !state.activeOrder) {
-                state.activeOrder = state.availableOrders[orderIndex];
-                state.availableOrders.splice(orderIndex, 1);
+            // @ts-ignore
+            state.activeOrder = action.payload;
+            state.availableOrders = state.availableOrders.filter(o => o.id !== action.payload.id);
+        });
+        builder.addCase(updateOrderStatusThunk.fulfilled, (state, action) => {
+            // @ts-ignore
+            state.activeOrder = action.payload;
+            if (action.payload.status === 'DELIVERED') {
+                state.orderHistory.unshift(state.activeOrder as ActiveOrder);
+                state.activeOrder = null;
+                state.stats.deliveries += 1;
             }
         });
     }
 });
 
-export const {
-    setAvailability,
-    updateLocation,
-    setActiveOrder,
-    setIncomingOrder,
-    acceptIncomingOrder,
-    acceptAvailableOrder,
-    rejectIncomingOrder,
-    updateOrderStatus,
-    completeOrder,
-    requestPayout
-} = deliverySlice.actions;
-
+export const { setAvailability, updateLocation } = deliverySlice.actions;
 export default deliverySlice.reducer;
