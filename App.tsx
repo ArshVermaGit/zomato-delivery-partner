@@ -8,8 +8,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store, persistor } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
 
+import { useNotifications } from './src/hooks/useNotifications';
+// import { LocationTrackingService } from './src/services/LocationTrackingService';
+
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
+  useNotifications();
+  // LocationTrackingService.startTracking(); // Should be controlled by UI
 
   return (
     <Provider store={store}>
