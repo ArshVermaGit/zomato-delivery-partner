@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LineChart } from 'react-native-chart-kit';
@@ -15,6 +15,8 @@ import {
 import { colors, typography, shadows } from '@zomato/design-tokens';
 import { Button } from '@zomato/ui';
 import { useNavigation } from '@react-navigation/native';
+import { useCreateAdHocPaymentMutation, useVerifyPaymentMutation } from '../../services/api/paymentsApi';
+import RazorpayCheckout from 'react-native-razorpay';
 
 // Local theme constants to ensure availability
 const spacing = { xs: 4, sm: 8, md: 12, base: 16, lg: 24, xl: 32 };
@@ -65,6 +67,41 @@ export const EarningsScreen = () => {
         { id: '4', type: 'bonus', amount: 200, time: '11:00 AM', label: 'Peak Hour Bonus', orderId: '' },
         { id: '5', orderId: 'ZOM12342', amount: 156, time: '10:30 AM', type: 'delivery', label: '' },
     ];
+    const [initiateAdHoc, { isLoading: isPaying }] = useCreateAdHocPaymentMutation();
+    const [verifyPayment] = useVerifyPaymentMutation();
+
+    const handleDeposit = async () => {
+        try {
+            const amount = 500; // Fixed amount for MVP
+            const paymentData = await initiateAdHoc({ amount, purpose: 'CASH_DEPOSIT' }).unwrap();
+
+            const options = {
+                description: 'Deposit Cash Collection',
+                image: 'https://b.zmtcdn.com/web_assets/b40b97e677bc7b2ca77c58c61db266fe1603954218.png',
+                currency: paymentData.currency,
+                key: paymentData.key,
+                amount: paymentData.amount,
+                name: 'Zomato Delivery',
+                order_id: paymentData.id,
+                theme: { color: colors.primary.zomato_red }
+            };
+
+            RazorpayCheckout.open(options).then(async (data: any) => {
+                await verifyPayment({
+                    paymentId: data.razorpay_payment_id,
+                    razorpayOrderId: data.razorpay_order_id,
+                    signature: data.razorpay_signature
+                }).unwrap();
+                Alert.alert('Success', 'Deposit Successful!');
+            }).catch((err: any) => {
+                console.error(err);
+                Alert.alert('Error', 'Payment Failed');
+            });
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to initiate deposit');
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -298,6 +335,16 @@ export const EarningsScreen = () => {
                     rightIcon={<ChevronRight size={20} color={colors.secondary.white} />}
                 >
                     {`Request Payout • ₹${currentEarnings.amount.toLocaleString('en-IN')}`}
+                </Button>
+                <View style={{ height: 12 }} />
+                <Button
+                    onPress={handleDeposit}
+                    variant="outline"
+                    size="large"
+                    loading={isPaying}
+                    fullWidth
+                >
+                    Deposit Floating Cash (₹500)
                 </Button>
             </View>
         </SafeAreaView>
