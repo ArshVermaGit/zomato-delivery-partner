@@ -9,13 +9,16 @@ import {
 } from 'lucide-react-native';
 import { Button } from '@zomato/ui';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '../../store';
+import { updateOrderStatusThunk } from '../../store/slices/deliverySlice';
 
 export const OrderDetailScreen = () => {
     const navigation = useNavigation<any>();
+    const dispatch = useDispatch<AppDispatch>();
     const route = useRoute<any>();
     const { orderId } = route.params || { orderId: 'ORD-MOCK' };
 
-    const [order, setOrder] = useState<any>(null);
     const [currentStatus, setCurrentStatus] = useState<'going_to_restaurant' | 'at_restaurant' | 'going_to_customer' | 'at_customer' | 'delivered'>('going_to_restaurant');
     const [showItems, setShowItems] = useState(true);
 
@@ -60,40 +63,25 @@ export const OrderDetailScreen = () => {
 
     const config = statusConfig[currentStatus];
 
+    const { activeOrder, orderHistory } = useSelector((state: RootState) => state.delivery);
+
+    // Find order from active or history based on ID
+    // If not found in locally cached lists, one might need to fetch it (omitted for MVP, assume passed or in list)
+    const orderData = activeOrder && activeOrder.id === orderId ? activeOrder : orderHistory.find(o => o.id === orderId);
+
     useEffect(() => {
-        // Mock fetch order details
-        setOrder({
-            displayId: '4521',
-            restaurantName: 'Burger King',
-            pickupAddress: 'Shop 12, GIP Mall, Sector 38, Noida',
-            distanceToPickup: 2.1,
-            etaToPickup: 8,
-            customerName: 'Rahul Verma',
-            dropAddress: 'H-201, Supertech Capetown, Sector 74, Noida',
-            distanceToDrop: 4.5,
-            etaToDrop: 18,
-            pickupOTP: '4451',
-            deliveryOTP: '8892',
-            deliveryInstructions: 'Leave at security gate if I am not available.',
-            items: [
-                { quantity: 1, name: 'Whopper Meal', isVeg: false, customizations: 'Coke, Medium Fries' },
-                { quantity: 2, name: 'Veg Tikka Burger', isVeg: true },
-            ],
-            itemsTotal: 450,
-            deliveryFee: 40,
-            taxes: 25,
-            discount: 50,
-            totalAmount: 465,
-            paymentMethod: 'online',
-            tip: 20,
-            earnings: {
-                baseFee: 35,
-                distanceBonus: 15,
-                peakHourBonus: 10,
-                total: 80 // 35+15+10 + 20 tip = 80
-            }
-        });
-    }, [orderId]);
+        if (orderData) {
+            // Map backend status to UI status
+            // Status flow: 'ACCEPTED' -> 'ARRIVED_RESTAURANT' -> 'PICKED_UP' -> 'ARRIVED_CUSTOMER' -> 'DELIVERED' -> 'OUT_FOR_DELIVERY' mapping
+            let uiStatus: any = 'going_to_restaurant';
+            if (orderData.status === 'ARRIVED_RESTAURANT') uiStatus = 'at_restaurant';
+            if (orderData.status === 'PICKED_UP' || orderData.status === 'OUT_FOR_DELIVERY') uiStatus = 'going_to_customer';
+            if (orderData.status === 'ARRIVED_CUSTOMER') uiStatus = 'at_customer';
+            if (orderData.status === 'DELIVERED') uiStatus = 'delivered';
+
+            setCurrentStatus(uiStatus);
+        }
+    }, [orderData, orderId]);
 
     const handleNavigate = () => {
         Alert.alert('Navigation', `Starting navigation to ${currentStatus.includes('restaurant') ? 'Restaurant' : 'Customer'}...`);
@@ -113,17 +101,33 @@ export const OrderDetailScreen = () => {
     };
 
     const handleMarkPickedUp = () => {
-        setCurrentStatus('going_to_customer');
+        if (!orderData) return;
+        dispatch(updateOrderStatusThunk({ orderId: orderData.id, status: 'PICKED_UP' }))
+            .unwrap()
+            .then(() => {
+                Alert.alert('Status Updated', 'Order picked up successfully');
+                setCurrentStatus('going_to_customer');
+            })
+            .catch(() => {
+                Alert.alert('Error', 'Failed to update status');
+            });
     };
 
     const handleMarkDelivered = () => {
-        setCurrentStatus('delivered');
-        Alert.alert('Success', 'Order Delivered Successfully!', [
-            { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        if (!orderData) return;
+        dispatch(updateOrderStatusThunk({ orderId: orderData.id, status: 'DELIVERED' }))
+            .unwrap()
+            .then(() => {
+                Alert.alert('Success', 'Order Delivered Successfully!', [
+                    { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+            })
+            .catch(() => {
+                Alert.alert('Error', 'Failed to update status');
+            });
     };
 
-    if (!order) return null;
+    if (!orderData) return null;
 
     return (
         <View style={styles.container}>
@@ -136,7 +140,7 @@ export const OrderDetailScreen = () => {
                     <ChevronLeft size={24} color={colors.secondary.gray_900} />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
-                    <Text style={styles.headerTitle}>Order #{order?.displayId}</Text>
+                    <Text style={styles.headerTitle}>Order #{orderData?.displayId}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: `${config.color}20` }]}>
                         <View style={[styles.statusDot, { backgroundColor: config.color }]} />
                         <Text style={[styles.statusText, { color: config.color }]}>
@@ -183,18 +187,18 @@ export const OrderDetailScreen = () => {
                             </View>
                             <View style={styles.locationInfo}>
                                 <Text style={styles.locationLabel}>Pickup from</Text>
-                                <Text style={styles.locationName}>{order?.restaurantName}</Text>
+                                <Text style={styles.locationName}>{orderData?.restaurantName}</Text>
                                 <Text style={styles.locationAddress} numberOfLines={2}>
-                                    {order?.pickupAddress}
+                                    {orderData?.pickupAddress}
                                 </Text>
                                 <View style={styles.locationMeta}>
                                     <View style={styles.metaItem}>
                                         <Navigation size={14} color={colors.secondary.gray_600} />
-                                        <Text style={styles.metaText}>{order?.distanceToPickup} km away</Text>
+                                        <Text style={styles.metaText}>{orderData?.distanceToPickup} km away</Text>
                                     </View>
                                     <View style={styles.metaItem}>
                                         <Clock size={14} color={colors.secondary.gray_600} />
-                                        <Text style={styles.metaText}>{order?.etaToPickup} mins</Text>
+                                        <Text style={styles.metaText}>{orderData?.etaToPickup} mins</Text>
                                     </View>
                                 </View>
                             </View>
@@ -226,7 +230,7 @@ export const OrderDetailScreen = () => {
                             <View style={styles.otpContainer}>
                                 <Text style={styles.otpLabel}>Pickup OTP</Text>
                                 <View style={styles.otpBox}>
-                                    <Text style={styles.otpCode}>{order?.pickupOTP}</Text>
+                                    <Text style={styles.otpCode}>{orderData?.pickupOTP}</Text>
                                 </View>
                                 <Text style={styles.otpHint}>Show this to restaurant staff</Text>
                             </View>
@@ -243,18 +247,18 @@ export const OrderDetailScreen = () => {
                             </View>
                             <View style={styles.locationInfo}>
                                 <Text style={styles.locationLabel}>Deliver to</Text>
-                                <Text style={styles.locationName}>{order?.customerName}</Text>
+                                <Text style={styles.locationName}>{orderData?.customerName}</Text>
                                 <Text style={styles.locationAddress} numberOfLines={2}>
-                                    {order?.dropAddress}
+                                    {orderData?.dropAddress}
                                 </Text>
                                 <View style={styles.locationMeta}>
                                     <View style={styles.metaItem}>
                                         <Navigation size={14} color={colors.secondary.gray_600} />
-                                        <Text style={styles.metaText}>{order?.distanceToDrop} km away</Text>
+                                        <Text style={styles.metaText}>{orderData?.distanceToDrop} km away</Text>
                                     </View>
                                     <View style={styles.metaItem}>
                                         <Clock size={14} color={colors.secondary.gray_600} />
-                                        <Text style={styles.metaText}>{order?.etaToDrop} mins</Text>
+                                        <Text style={styles.metaText}>{orderData?.etaToDrop} mins</Text>
                                     </View>
                                 </View>
                             </View>
@@ -282,14 +286,14 @@ export const OrderDetailScreen = () => {
                         </View>
 
                         {/* Instructions */}
-                        {order?.deliveryInstructions && (
+                        {orderData?.deliveryInstructions && (
                             <View style={styles.instructionsContainer}>
                                 <View style={styles.instructionsHeader}>
                                     <FileText size={16} color={colors.secondary.gray_600} />
                                     <Text style={styles.instructionsLabel}>Delivery Instructions</Text>
                                 </View>
                                 <Text style={styles.instructionsText}>
-                                    {order.deliveryInstructions}
+                                    {orderData.deliveryInstructions}
                                 </Text>
                             </View>
                         )}
@@ -299,7 +303,7 @@ export const OrderDetailScreen = () => {
                             <View style={styles.otpContainer}>
                                 <Text style={styles.otpLabel}>Delivery OTP</Text>
                                 <View style={styles.otpBox}>
-                                    <Text style={styles.otpCode}>{order?.deliveryOTP}</Text>
+                                    <Text style={styles.otpCode}>{orderData?.deliveryOTP}</Text>
                                 </View>
                                 <Text style={styles.otpHint}>Ask customer for this OTP</Text>
                             </View>
@@ -315,7 +319,7 @@ export const OrderDetailScreen = () => {
                     >
                         <View style={styles.itemsHeaderLeft}>
                             <Package size={20} color={colors.secondary.gray_900} />
-                            <Text style={styles.itemsTitle}>Order Items ({order?.items?.length})</Text>
+                            <Text style={styles.itemsTitle}>Order Items ({orderData?.items?.length})</Text>
                         </View>
                         <ChevronDown
                             size={20}
@@ -326,7 +330,7 @@ export const OrderDetailScreen = () => {
 
                     {showItems && (
                         <Animated.View entering={FadeInDown}>
-                            {order?.items?.map((item: any, index: number) => (
+                            {orderData?.items?.map((item: any, index: number) => (
                                 <View key={index} style={styles.orderItem}>
                                     <View style={styles.itemQuantity}>
                                         <Text style={styles.itemQuantityText}>{item.quantity}x</Text>
@@ -361,39 +365,39 @@ export const OrderDetailScreen = () => {
                     <Text style={styles.summaryTitle}>Order Summary</Text>
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Item Total</Text>
-                        <Text style={styles.summaryValue}>₹{order?.itemsTotal}</Text>
+                        <Text style={styles.summaryValue}>₹{orderData?.itemsTotal}</Text>
                     </View>
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Delivery Fee</Text>
-                        <Text style={styles.summaryValue}>₹{order?.deliveryFee}</Text>
+                        <Text style={styles.summaryValue}>₹{orderData?.deliveryFee}</Text>
                     </View>
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Taxes</Text>
-                        <Text style={styles.summaryValue}>₹{order?.taxes}</Text>
+                        <Text style={styles.summaryValue}>₹{orderData?.taxes}</Text>
                     </View>
-                    {order?.discount > 0 && (
+                    {(orderData?.discount || 0) > 0 && (
                         <View style={styles.summaryRow}>
                             <Text style={styles.summaryLabel}>Discount</Text>
                             <Text style={[styles.summaryValue, { color: colors.semantic.success }]}>
-                                -₹{order?.discount}
+                                -₹{orderData?.discount}
                             </Text>
                         </View>
                     )}
                     <View style={styles.summaryDivider} />
                     <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabelTotal}>Total Amount</Text>
-                        <Text style={styles.summaryValueTotal}>₹{order?.totalAmount}</Text>
+                        <Text style={styles.summaryValueTotal}>₹{orderData?.totalAmount}</Text>
                     </View>
                     <View style={styles.paymentMethod}>
                         <Text style={styles.paymentLabel}>Payment Method</Text>
                         <View style={styles.paymentBadge}>
-                            {order?.paymentMethod === 'cash' ? (
+                            {orderData?.paymentMethod === 'cash' ? (
                                 <Banknote size={16} color={colors.semantic.success} />
                             ) : (
                                 <CreditCard size={16} color={colors.semantic.info} />
                             )}
                             <Text style={styles.paymentText}>
-                                {order?.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Paid Online'}
+                                {orderData?.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Paid Online'}
                             </Text>
                         </View>
                     </View>
@@ -408,25 +412,25 @@ export const OrderDetailScreen = () => {
                     <View style={styles.earningsBreakdown}>
                         <View style={styles.earningsRow}>
                             <Text style={styles.earningsLabel}>Base Fee</Text>
-                            <Text style={styles.earningsValue}>₹{order?.earnings?.baseFee}</Text>
+                            <Text style={styles.earningsValue}>₹{orderData?.earnings?.baseFee}</Text>
                         </View>
-                        {order?.earnings?.distanceBonus > 0 && (
+                        {(orderData?.earnings?.distanceBonus || 0) > 0 && (
                             <View style={styles.earningsRow}>
                                 <Text style={styles.earningsLabel}>Distance Bonus</Text>
-                                <Text style={styles.earningsValue}>₹{order?.earnings?.distanceBonus}</Text>
+                                <Text style={styles.earningsValue}>₹{orderData?.earnings?.distanceBonus}</Text>
                             </View>
                         )}
-                        {order?.earnings?.peakHourBonus > 0 && (
+                        {(orderData?.earnings?.peakHourBonus || 0) > 0 && (
                             <View style={styles.earningsRow}>
                                 <Text style={styles.earningsLabel}>Peak Hour Bonus</Text>
-                                <Text style={styles.earningsValue}>₹{order?.earnings?.peakHourBonus}</Text>
+                                <Text style={styles.earningsValue}>₹{orderData?.earnings?.peakHourBonus}</Text>
                             </View>
                         )}
-                        {order?.tip > 0 && (
+                        {(orderData?.tip || 0) > 0 && (
                             <View style={styles.earningsRow}>
                                 <Text style={styles.earningsLabel}>Customer Tip</Text>
                                 <Text style={[styles.earningsValue, { color: colors.semantic.success }]}>
-                                    ₹{order?.tip}
+                                    ₹{orderData?.tip}
                                 </Text>
                             </View>
                         )}
@@ -434,7 +438,7 @@ export const OrderDetailScreen = () => {
                     <View style={styles.earningsDivider} />
                     <View style={styles.earningsTotal}>
                         <Text style={styles.earningsTotalLabel}>Total Earnings</Text>
-                        <Text style={styles.earningsTotalValue}>₹{order?.earnings?.total}</Text>
+                        <Text style={styles.earningsTotalValue}>₹{orderData?.earnings?.total}</Text>
                     </View>
                 </View>
 
