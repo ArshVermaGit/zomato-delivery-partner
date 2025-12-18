@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import IncomingOrderModal from '../../components/orders/IncomingOrderModal';
+import React, { useState, useCallback, useMemo } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TouchableOpacity,
+    RefreshControl,
+    ActivityIndicator,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSequence,
     withSpring,
     FadeInDown,
     SlideInDown
@@ -16,119 +21,153 @@ import {
     Zap, ZapOff, ChevronRight, AlertCircle, MapPin,
     MoreVertical, Navigation, ArrowRight, Star, TrendingUp,
     Clock, Target, DollarSign, Package, Award, HelpCircle,
-    Bell, Shield, User
+    User
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 import { RootState } from '../../store';
+import { MainTabScreenProps } from '../../navigation/navigation.types';
+import {
+    useGetHomeStatsQuery,
+    useGetActiveOrderQuery,
+    useToggleAvailabilityMutation
+} from '../../services/api/deliveryApi';
+import IncomingOrderModal from '../../components/orders/IncomingOrderModal';
 
-// Mock AnimatedNumber for simplicity if not available, or could implement with Reanimated
-const AnimatedNumber = ({ value, style }: { value: number, style?: any }) => {
-    return <Text style={style}>{value}</Text>;
-};
+/**
+ * Avatar Component
+ */
+const Avatar = ({ size, imageUri }: { size: number, imageUri?: string }) => (
+    <View style={[styles.avatarBase, { width: size, height: size, borderRadius: size / 2 }]}>
+        {imageUri ? (
+            <Animated.Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} />
+        ) : (
+            <User size={size / 2} color={colors.secondary.gray_500} />
+        )}
+    </View>
+);
 
-const Avatar = ({ size, imageUri }: { size: number, imageUri?: string }) => {
-    return (
-        <View style={{
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: colors.secondary.gray_200,
-            overflow: 'hidden',
-            justifyContent: 'center',
-            alignItems: 'center'
-        }}>
-            {imageUri ? <Animated.Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} /> : <User size={size / 2} color={colors.secondary.gray_500} />}
+/**
+ * Performance Stat Component
+ */
+const PerformanceStat = ({ icon, value, label, color }: {
+    icon: React.ReactNode;
+    value: string | number;
+    label: string;
+    color: string;
+}) => (
+    <View style={styles.performanceStat}>
+        <View style={[styles.performanceIconContainer, { backgroundColor: `${color}15` }]}>
+            {icon}
         </View>
-    );
-};
+        <Text style={styles.performanceValue}>{value}</Text>
+        <Text style={styles.performanceLabel}>{label}</Text>
+    </View>
+);
 
-export const DeliveryHomeScreen = () => {
-    const navigation = useNavigation<any>();
-    const { user } = useSelector((state: RootState) => state.auth) as { user: any };
-    // Using local state for UI demo, in real app sync with Redux
+/**
+ * Quick Action Button Component
+ */
+const QuickActionButton = ({ icon, label, onPress }: {
+    icon: React.ReactNode;
+    label: string;
+    onPress: () => void;
+}) => (
+    <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
+        <View style={styles.quickActionIcon}>{icon}</View>
+        <Text style={styles.quickActionLabel}>{label}</Text>
+    </TouchableOpacity>
+);
+
+/**
+ * Delivery Home Screen
+ * Displays partner stats, online status, and active orders.
+ */
+export const DeliveryHomeScreen = ({ navigation }: MainTabScreenProps<'Home'>) => {
+    const { user } = useSelector((state: RootState) => state.auth);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    // RTK Query Hooks
+    const {
+        data: stats,
+        isLoading: isStatsLoading,
+        refetch: refetchStats
+    } = useGetHomeStatsQuery();
+
+    const {
+        data: activeOrder,
+        refetch: refetchActiveOrder
+    } = useGetActiveOrderQuery();
+
+    const [toggleAvailability, { isLoading: isToggling }] = useToggleAvailabilityMutation();
+
+    // UI State
     const [isOnline, setIsOnline] = useState(false);
     const [incomingOrder, setIncomingOrder] = useState<any>(null);
 
-    const mockIncomingOrder = {
-        id: 'ORD-1234',
-        restaurantName: 'Burger King',
-        restaurantAddress: 'G-12, Sector 18, Noida',
-        customerName: 'Rahul Kumar',
-        customerAddress: 'B-404, Ace City, Noida Ext',
-        pickupLocation: { lat: 28.567, lng: 77.321 },
-        dropLocation: { lat: 28.570, lng: 77.325 },
-        amount: 145,
-        estimatedTime: 25,
-        itemsCount: 3,
-        peakHourBonus: 20
+    const onRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await Promise.all([refetchStats(), refetchActiveOrder()]);
+        setIsRefreshing(false);
+    }, [refetchStats, refetchActiveOrder]);
+
+    const handleToggleOnline = async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        try {
+            const nextStatus = !isOnline;
+            await toggleAvailability(nextStatus).unwrap();
+            setIsOnline(nextStatus);
+        } catch (error) {
+            console.error('Failed to toggle status', error);
+        }
     };
 
     const handleAcceptOrder = (order: any) => {
         setIncomingOrder(null);
-        // In real app: dispatch(acceptOrder(order));
         navigation.navigate('OrderDetail', { orderId: order.id });
     };
 
-    const handleRejectOrder = (order: any) => {
-        setIncomingOrder(null);
-    };
-
-    // Mock data derived from user or store
-    const partnerName = user?.name || 'Partner';
-    const profileImage = user?.profileImage; // assuming added to auth state
-
-    // Mock stats
-    const todaysEarnings = 1250;
-    const deliveryCount = 12;
-    const onlineHours = 5.5;
-    const avgPerDelivery = 104;
-
-    const rating = 4.8;
-    const acceptanceRate = 95;
-    const onTimeRate = 98;
-    const completionRate = 100;
-
-    // Active Order Mock
-    const activeOrder: any = null; // Set to object to test active state
-
     const scale = useSharedValue(1);
-
     const toggleStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
 
-    const handleToggleOnline = () => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        scale.value = withSequence(
-            withSpring(0.95),
-            withSpring(1)
-        );
-        setIsOnline(!isOnline);
-    };
-
-    const getTimeOfDay = () => {
+    const getTimeOfDay = useMemo(() => {
         const hour = new Date().getHours();
         if (hour < 12) return 'Morning';
         if (hour < 18) return 'Afternoon';
         return 'Evening';
-    };
+    }, []);
+
+    if (isStatsLoading && !isRefreshing) {
+        return (
+            <View style={styles.centered}>
+                <ActivityIndicator size="large" color={colors.primary.zomato_red} />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.content}
+                refreshControl={
+                    <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary.zomato_red} />
+                }
             >
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Good {getTimeOfDay()},</Text>
-                        <Text style={styles.name}>{partnerName}</Text>
+                        <Text style={styles.greeting}>Good {getTimeOfDay},</Text>
+                        <Text style={styles.name}>{user?.name || 'Partner'}</Text>
                     </View>
                     <TouchableOpacity style={styles.profileButton} onPress={() => navigation.navigate('Profile')}>
-                        <Avatar size={44} imageUri={profileImage} />
-                        <View style={[styles.onlineIndicator, { backgroundColor: isOnline ? colors.semantic.success : colors.secondary.gray_400 }]} />
+                        <Avatar size={44} imageUri={user?.photo} />
+                        <View style={[styles.onlineIndicator, {
+                            backgroundColor: isOnline ? colors.semantic.success : colors.secondary.gray_400
+                        }]} />
                     </TouchableOpacity>
                 </View>
 
@@ -140,6 +179,7 @@ export const DeliveryHomeScreen = () => {
                             { backgroundColor: isOnline ? colors.semantic.success : colors.secondary.gray_400 }
                         ]}
                         onPress={handleToggleOnline}
+                        disabled={isToggling}
                         activeOpacity={0.9}
                     >
                         <View style={styles.toggleContent}>
@@ -159,7 +199,7 @@ export const DeliveryHomeScreen = () => {
                                         {isOnline ? "You're Online" : "You're Offline"}
                                     </Text>
                                     <Text style={styles.toggleSubtext}>
-                                        {isOnline ? 'Ready to accept orders' : 'Tap to go online'}
+                                        {isToggling ? 'Updating...' : (isOnline ? 'Ready to accept orders' : 'Tap to go online')}
                                     </Text>
                                 </View>
                             </View>
@@ -167,26 +207,14 @@ export const DeliveryHomeScreen = () => {
                         </View>
                     </TouchableOpacity>
 
-                    {/* Warning if offline */}
-                    {!isOnline && (
-                        <Animated.View
-                            entering={FadeInDown}
-                            style={styles.offlineWarning}
-                        >
+                    {!isOnline && !isToggling && (
+                        <Animated.View entering={FadeInDown} style={styles.offlineWarning}>
                             <AlertCircle size={16} color={colors.semantic.warning} />
                             <Text style={styles.offlineWarningText}>
                                 You won't receive new orders while offline
                             </Text>
                         </Animated.View>
                     )}
-
-                    {/* Demo Button for testing */}
-                    <TouchableOpacity
-                        style={{ marginVertical: 10, padding: 12, backgroundColor: '#333', borderRadius: 8, alignItems: 'center' }}
-                        onPress={() => setIncomingOrder(mockIncomingOrder)}
-                    >
-                        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Simulate Incoming Order</Text>
-                    </TouchableOpacity>
                 </Animated.View>
 
                 {/* Today's Earnings */}
@@ -201,33 +229,30 @@ export const DeliveryHomeScreen = () => {
 
                     <View style={styles.earningsAmount}>
                         <Text style={styles.currencySymbol}>₹</Text>
-                        <AnimatedNumber value={todaysEarnings} style={styles.earningsValue} />
+                        <Text style={styles.earningsValue}>{stats?.todaysEarnings || 0}</Text>
                     </View>
 
                     <View style={styles.earningsStats}>
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>{deliveryCount}</Text>
+                            <Text style={styles.statValue}>{stats?.deliveryCount || 0}</Text>
                             <Text style={styles.statLabel}>Deliveries</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>{onlineHours}</Text>
+                            <Text style={styles.statValue}>{stats?.onlineHours || 0}</Text>
                             <Text style={styles.statLabel}>Hours Online</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>₹{avgPerDelivery}</Text>
+                            <Text style={styles.statValue}>₹{stats?.avgPerDelivery || 0}</Text>
                             <Text style={styles.statLabel}>Avg/Delivery</Text>
                         </View>
                     </View>
                 </View>
 
-                {/* Active Order (if any) */}
+                {/* Active Order */}
                 {activeOrder && (
-                    <Animated.View
-                        entering={SlideInDown.springify()}
-                        style={styles.activeOrderCard}
-                    >
+                    <Animated.View entering={SlideInDown.springify()} style={styles.activeOrderCard}>
                         <View style={styles.activeOrderHeader}>
                             <View style={styles.activeOrderBadge}>
                                 <Text style={styles.activeOrderBadgeText}>Active Order</Text>
@@ -239,12 +264,8 @@ export const DeliveryHomeScreen = () => {
                             <View style={styles.activeOrderLocation}>
                                 <MapPin size={20} color={colors.primary.zomato_red} />
                                 <View style={styles.activeOrderLocationText}>
-                                    <Text style={styles.activeOrderRestaurant}>
-                                        {activeOrder.restaurant}
-                                    </Text>
-                                    <Text style={styles.activeOrderAddress} numberOfLines={1}>
-                                        {activeOrder.pickupAddress}
-                                    </Text>
+                                    <Text style={styles.activeOrderRestaurant}>{activeOrder.restaurantName}</Text>
+                                    <Text style={styles.activeOrderAddress} numberOfLines={1}>{activeOrder.restaurantAddress}</Text>
                                 </View>
                             </View>
 
@@ -256,12 +277,8 @@ export const DeliveryHomeScreen = () => {
                             <View style={styles.activeOrderLocation}>
                                 <Navigation size={20} color={colors.semantic.success} />
                                 <View style={styles.activeOrderLocationText}>
-                                    <Text style={styles.activeOrderCustomer}>
-                                        {activeOrder.customerName}
-                                    </Text>
-                                    <Text style={styles.activeOrderAddress} numberOfLines={1}>
-                                        {activeOrder.dropAddress}
-                                    </Text>
+                                    <Text style={styles.activeOrderCustomer}>{activeOrder.customerName}</Text>
+                                    <Text style={styles.activeOrderAddress} numberOfLines={1}>{activeOrder.customerAddress}</Text>
                                 </View>
                             </View>
                         </View>
@@ -288,25 +305,25 @@ export const DeliveryHomeScreen = () => {
                     <View style={styles.performanceGrid}>
                         <PerformanceStat
                             icon={<Star size={24} color={colors.semantic.warning} fill={colors.semantic.warning} />}
-                            value={rating}
+                            value={stats?.rating || 0}
                             label="Rating"
                             color={colors.semantic.warning}
                         />
                         <PerformanceStat
                             icon={<TrendingUp size={24} color={colors.semantic.success} />}
-                            value={`${acceptanceRate}%`}
+                            value={`${stats?.acceptanceRate || 0}%`}
                             label="Acceptance"
                             color={colors.semantic.success}
                         />
                         <PerformanceStat
                             icon={<Clock size={24} color={colors.semantic.info} />}
-                            value={`${onTimeRate}%`}
+                            value={`${stats?.onTimeRate || 0}%`}
                             label="On Time"
                             color={colors.semantic.info}
                         />
                         <PerformanceStat
                             icon={<Target size={24} color={colors.primary.zomato_red} />}
-                            value={completionRate}
+                            value={`${stats?.completionRate || 0}%`}
                             label="Completion"
                             color={colors.primary.zomato_red}
                         />
@@ -337,40 +354,28 @@ export const DeliveryHomeScreen = () => {
                     />
                 </View>
 
-                {/* Spacer */}
                 <View style={{ height: 80 }} />
             </ScrollView>
+
             <IncomingOrderModal
                 visible={!!incomingOrder}
                 order={incomingOrder}
                 onAccept={handleAcceptOrder}
-                onReject={handleRejectOrder}
+                onReject={() => setIncomingOrder(null)}
             />
         </SafeAreaView>
     );
 };
 
-// Sub-components
-const PerformanceStat = ({ icon, value, label, color }: any) => (
-    <View style={styles.performanceStat}>
-        <View style={[styles.performanceIconContainer, { backgroundColor: `${color}15` }]}>
-            {icon}
-        </View>
-        <Text style={styles.performanceValue}>{value}</Text>
-        <Text style={styles.performanceLabel}>{label}</Text>
-    </View>
-);
-
-const QuickActionButton = ({ icon, label, onPress }: any) => (
-    <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
-        <View style={styles.quickActionIcon}>{icon}</View>
-        <Text style={styles.quickActionLabel}>{label}</Text>
-    </TouchableOpacity>
-);
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: colors.secondary.gray_50,
+    },
+    centered: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: colors.secondary.gray_50,
     },
     content: {
@@ -393,6 +398,12 @@ const styles = StyleSheet.create({
     },
     profileButton: {
         position: 'relative',
+    },
+    avatarBase: {
+        backgroundColor: colors.secondary.gray_200,
+        overflow: 'hidden',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     onlineIndicator: {
         position: 'absolute',
