@@ -6,29 +6,32 @@
     "slug": "zomato-delivery-partner",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#EA0025"
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
+    "icon": "./assets/icon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.zomato.delivery"
+      "bundleIdentifier": "com.zomato.delivery",
+      "infoPlist": {
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Zomato Delivery to track your location for deliveries.",
+        "NSLocationWhenInUseUsageDescription": "Allow Zomato Delivery to track your location for deliveries."
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.zomato.delivery"
+      "package": "com.zomato.delivery",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +41,13 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Zomato Delivery to track your location for deliveries."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#EA0025"
         }
       ]
     ]
