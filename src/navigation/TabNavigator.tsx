@@ -7,8 +7,9 @@ import { DeliveryHomeScreen } from '../screens/home/HomeScreen';
 import OrdersListScreen from '../screens/orders/OrdersListScreen';
 import EarningsScreen from '../screens/earnings/EarningsScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import { TabParamList } from './navigation.types';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 
 export const TabNavigator = () => {
     // Mock active order count for now
