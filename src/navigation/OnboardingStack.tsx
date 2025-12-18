@@ -5,8 +5,9 @@ import DocumentUploadScreen from '../screens/onboarding/DocumentUploadScreen';
 import VehicleDetailsScreen from '../screens/onboarding/VehicleDetailsScreen';
 import BankDetailsScreen from '../screens/onboarding/BankDetailsScreen';
 import VerificationStatusScreen from '../screens/onboarding/VerificationStatusScreen';
+import { OnboardingStackParamList } from './navigation.types';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<OnboardingStackParamList>();
 
 const OnboardingStack = () => {
     return (
