@@ -5,16 +5,13 @@ import { PayoutScreen } from '../screens/earnings/PayoutScreen';
 import { IncentivesScreen } from '../screens/earnings/IncentivesScreen';
 import { PerformanceScreen } from '../screens/performance/PerformanceScreen';
 import { SafetyCenterScreen } from '../screens/safety/SafetyCenterScreen';
-import {
-    MyDetailsScreen, VehicleDetailsScreen, DocumentsScreen,
-    HelpSupportScreen, SOSScreen,
-    AccidentReportScreen
-} from '../screens/Placeholders';
+import { MyDetailsScreen, VehicleDetailsScreen, DocumentsScreen, HelpSupportScreen, SOSScreen, AccidentReportScreen } from '../screens/Placeholders';
+import { MainStackParamList } from './navigation.types';
 
 
 // ... other imports ...
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<MainStackParamList>();
 
 const MainStack = () => {
     return (
