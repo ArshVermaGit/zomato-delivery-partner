@@ -11,19 +11,25 @@ import IncomingOrderModal from '../components/orders/IncomingOrderModal';
 import { RootState } from '../store';
 
 import { DeliverySplashScreen } from '../screens/splash/DeliverySplashScreen';
+import { RootStackParamList } from './navigation.types';
+import { LinkingOptions } from '@react-navigation/native';
 
-const RootStack = createStackNavigator();
+const RootStack = createStackNavigator<RootStackParamList>();
 
-const linking = {
+const linking: LinkingOptions<RootStackParamList> = {
     prefixes: ['zomatodelivery://'],
     config: {
         screens: {
             MainStack: {
                 screens: {
-                    Home: 'home',
-                    Orders: 'orders',
-                    Earnings: 'earnings',
-                    Profile: 'profile',
+                    MainTabs: {
+                        screens: {
+                            Home: 'home',
+                            Orders: 'orders',
+                            Earnings: 'earnings',
+                            Profile: 'profile',
+                        }
+                    }
                 },
             },
         },
