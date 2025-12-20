@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
 import { colors } from '@zomato/design-tokens';
@@ -29,7 +29,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
 
     useEffect(() => {
         progress.value = withTiming(value / max, { duration: 1000 });
-    }, [value, max]);
+    }, [value, max, progress]);
 
     const animatedProps = useAnimatedProps(() => {
         return {
