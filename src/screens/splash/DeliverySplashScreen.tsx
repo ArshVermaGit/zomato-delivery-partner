@@ -6,7 +6,6 @@ import Animated, {
     withSequence,
     withSpring,
     withTiming,
-    interpolate
 } from 'react-native-reanimated';
 import { Bike } from 'lucide-react-native';
 import { colors, spacing, typography } from '@/theme';
@@ -33,7 +32,7 @@ export const DeliverySplashScreen: React.FC<DeliverySplashScreenProps> = ({ onFi
 
         const timer = setTimeout(onFinish, 2500);
         return () => clearTimeout(timer);
-    }, []);
+    }, [bikeTranslateX, logoOpacity, logoScale, onFinish]);
 
     const logoStyle = useAnimatedStyle(() => ({
         transform: [{ scale: logoScale.value }],
