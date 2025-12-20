@@ -43,6 +43,7 @@ export interface ActiveOrder {
     distanceToDrop?: string | number;
     etaToPickup?: string | number;
     etaToDrop?: string | number;
+    estimatedTime?: number;
 
     pickupOTP?: string;
     deliveryOTP?: string;
@@ -63,6 +64,36 @@ export interface ActiveOrder {
     createdAt?: string;
 }
 
+export interface Stats {
+    deliveries: number;
+    onlineHours: number;
+    acceptanceRate: number;
+    rating: number;
+    onTimeRate?: number;
+    completionRate?: number;
+    avgPerDelivery?: number;
+    todaysEarnings?: number;
+    deliveryCount?: number;
+}
+
+export interface Transaction {
+    id: string;
+    type: 'EARNING' | 'PAYOUT';
+    amount: number;
+    date: string;
+    description: string;
+}
+
+export interface Incentive {
+    id: string;
+    title: string;
+    description: string;
+    reward: number;
+    target: number;
+    current: number;
+    expiry: string;
+}
+
 export interface DeliveryState {
     isOnline: boolean;
     location: Location | null;
@@ -71,10 +102,12 @@ export interface DeliveryState {
     orderHistory: ActiveOrder[];
     loading: boolean;
     error: string | null;
-    stats: any; // Simplified for brevity in this update
+    stats: Stats;
     earnings: any;
-    transactions: any[];
+    transactions: Transaction[];
     payouts: any[];
+    incentives: Incentive[];
+    profile: any | null;
 }
 
 const initialState: DeliveryState = {
@@ -89,15 +122,14 @@ const initialState: DeliveryState = {
     earnings: { today: 0, week: 0, pending: 0 },
     transactions: [],
     payouts: [],
+    incentives: [],
+    profile: null,
 };
-
-// ... Thunks same as before, just ensuring types match ...
 
 export const fetchAvailableOrders = createAsyncThunk(
     'delivery/fetchAvailableOrders',
-    async (_, { getState }) => {
-        const orders = await OrderService.getAvailableOrders();
-        // Ensure proper mapping in Service to match ActiveOrder interface
+    async (location: Location | null) => {
+        const orders = await OrderService.getAvailableOrders(location);
         return orders;
     }
 );
@@ -118,6 +150,14 @@ export const updateOrderStatusThunk = createAsyncThunk(
     }
 );
 
+export const completeOrderThunk = createAsyncThunk(
+    'delivery/completeOrder',
+    async (orderId: string) => {
+        const order = await OrderService.updateStatus(orderId, 'DELIVERED');
+        return order;
+    }
+);
+
 const deliverySlice = createSlice({
     name: 'delivery',
     initialState,
@@ -128,23 +168,25 @@ const deliverySlice = createSlice({
         updateLocation: (state, action: PayloadAction<Location>) => {
             state.location = action.payload;
         },
+        setIncomingOrder: (state, action: PayloadAction<ActiveOrder>) => {
+            if (!state.availableOrders.find(o => o.id === action.payload.id)) {
+                state.availableOrders.unshift(action.payload);
+            }
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchAvailableOrders.pending, (state) => {
             state.loading = true;
         });
         builder.addCase(fetchAvailableOrders.fulfilled, (state, action) => {
-            // @ts-ignore
             state.availableOrders = action.payload;
             state.loading = false;
         });
         builder.addCase(acceptOrderThunk.fulfilled, (state, action) => {
-            // @ts-ignore
             state.activeOrder = action.payload;
             state.availableOrders = state.availableOrders.filter(o => o.id !== action.payload.id);
         });
         builder.addCase(updateOrderStatusThunk.fulfilled, (state, action) => {
-            // @ts-ignore
             state.activeOrder = action.payload;
             if (action.payload.status === 'DELIVERED') {
                 state.orderHistory.unshift(state.activeOrder as ActiveOrder);
@@ -152,8 +194,13 @@ const deliverySlice = createSlice({
                 state.stats.deliveries += 1;
             }
         });
+        builder.addCase(completeOrderThunk.fulfilled, (state, action) => {
+            state.orderHistory.unshift(action.payload);
+            state.activeOrder = null;
+            state.stats.deliveries += 1;
+        });
     }
 });
 
-export const { setAvailability, updateLocation } = deliverySlice.actions;
+export const { setAvailability, updateLocation, setIncomingOrder } = deliverySlice.actions;
 export default deliverySlice.reducer;

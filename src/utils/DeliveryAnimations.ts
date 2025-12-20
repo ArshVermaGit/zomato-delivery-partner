@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Dimensions } from 'react-native';
 import {
     useSharedValue,
     useAnimatedStyle,
@@ -11,76 +10,67 @@ import {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Collection of reusable animations
-export const DeliveryAnimations = {
-    // Toggle Online/Offline
-    toggleOnlineAnimation: () => {
-        const scale = useSharedValue(1);
+// Custom hooks for animations
+export const useToggleOnlineAnimation = () => {
+    const scale = useSharedValue(1);
 
-        const animatedStyle = useAnimatedStyle(() => ({
-            transform: [{ scale: scale.value }],
-        }));
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
 
-        const animate = () => {
-            scale.value = withSequence(
-                withSpring(0.9, { damping: 10 }),
-                withSpring(1.1, { damping: 10 }),
-                withSpring(1, { damping: 15 })
-            );
-        };
+    const animate = () => {
+        scale.value = withSequence(
+            withSpring(0.9, { damping: 10 }),
+            withSpring(1.1, { damping: 10 }),
+            withSpring(1, { damping: 15 })
+        );
+    };
 
-        return { animatedStyle, animate };
-    },
+    return { animatedStyle, animate };
+};
 
-    // Order Accept Celebration
-    acceptCelebration: () => {
-        const scale = useSharedValue(0);
-        const opacity = useSharedValue(0);
+export const useAcceptCelebration = () => {
+    const scale = useSharedValue(0);
+    const opacity = useSharedValue(0);
 
-        useEffect(() => {
-            scale.value = withSpring(1);
-            opacity.value = withTiming(1, { duration: 300 });
-        }, []);
+    useEffect(() => {
+        scale.value = withSpring(1);
+        opacity.value = withTiming(1, { duration: 300 });
+    }, [scale, opacity]);
 
-        return useAnimatedStyle(() => ({
-            transform: [{ scale: scale.value }],
-            opacity: opacity.value,
-        }));
-    },
+    return useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+        opacity: opacity.value,
+    }));
+};
 
-    // Earnings Counter
-    earningsCounter: (from: number, to: number, duration = 1000) => {
-        const value = useSharedValue(from);
+export const useEarningsCounter = (to: number, duration = 1000) => {
+    const value = useSharedValue(0);
 
-        useEffect(() => {
-            value.value = withTiming(to, { duration, easing: Easing.out(Easing.cubic) });
-        }, [to, duration]);
+    useEffect(() => {
+        value.value = withTiming(to, { duration, easing: Easing.out(Easing.cubic) });
+    }, [to, duration, value]);
 
-        return value;
-    },
+    return value;
+};
 
-    // Status Change Pulse
-    statusPulse: () => {
-        const scale = useSharedValue(1);
+export const useStatusPulse = () => {
+    const scale = useSharedValue(1);
 
-        useEffect(() => {
-            scale.value = withRepeat(
-                withSequence(
-                    withTiming(1.1, { duration: 500 }),
-                    withTiming(1, { duration: 500 })
-                ),
-                -1,
-                true
-            );
-        }, []);
+    useEffect(() => {
+        scale.value = withRepeat(
+            withSequence(
+                withTiming(1.1, { duration: 500 }),
+                withTiming(1, { duration: 500 })
+            ),
+            -1,
+            true
+        );
+    }, [scale]);
 
-        return useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-    },
-
-    // Swipe to Delete - Removed due to Reanimated v4 incompatibility (useAnimatedGestureHandler deprecated)
-    // Future implementation should use Gesture.Pan() from react-native-gesture-handler
+    return useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 };
 
 // Haptic Feedback Wrapper

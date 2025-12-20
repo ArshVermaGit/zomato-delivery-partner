@@ -19,7 +19,7 @@ export const deliveryApi = api.injectEndpoints({
             transformResponse: (response: ApiResponse<ActiveOrder | null>) => response.data,
             providesTags: ['Orders'],
         }),
-        toggleAvailability: builder.mutation<void, boolean>({
+        toggleAvailability: builder.mutation<ApiResponse<void>, boolean>({
             query: (isOnline) => ({
                 url: '/delivery/availability',
                 method: 'POST',

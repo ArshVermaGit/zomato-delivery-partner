@@ -49,7 +49,7 @@ class LocationService {
                     distanceInterval: 10, // Update every 10m
                 },
                 (location) => {
-                    const { speed } = location.coords;
+                    // store.dispatch(updateLocation({
 
                     // Optimization: Only dispatch if significant change or sufficient time passed
                     // (Simplified logic here - in prod use react-native-background-geolocation's built-in stationary detection)

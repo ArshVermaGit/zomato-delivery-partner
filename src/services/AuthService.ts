@@ -33,7 +33,7 @@ export const AuthService = {
             const response = await ApiAuthService.login({ phoneNumber, password: 'password' });
             // Backend login returns { access_token } usually, verify mapping
             // If backend login returns user & token:
-            const { user, access_token } = response;
+            const { access_token } = response;
             // We need to map response correctly.
             // Looking at AuthController: login returns `this.authService.login(req.user)` which returns access_token.
             // It might NOT return user object. We might need to fetch profile.

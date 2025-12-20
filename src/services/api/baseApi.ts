@@ -49,7 +49,7 @@ const axiosBaseQuery = (
     },
     unknown,
     ApiError
-> => async ({ url, method, data, params, headers, timeout = TIMEOUT_MS }, api, extraOptions) => {
+> => async ({ url, method, data, params, headers, timeout = TIMEOUT_MS }, _api, _extraOptions) => {
     // 1. Offline Detection
     const state = await NetInfo.fetch();
     if (!state.isConnected) {
@@ -57,6 +57,7 @@ const axiosBaseQuery = (
             error: {
                 code: ErrorCode.OFFLINE,
                 message: 'You are offline. Please check your connection to receive orders.',
+                status: 0,
                 timestamp: new Date().toISOString(),
             },
         };
@@ -91,7 +92,7 @@ const axiosBaseQuery = (
                     if (refreshResult.data.accessToken) {
                         await AsyncStorage.setItem('delivery_token', refreshResult.data.accessToken);
                         mutex.release();
-                        return axiosBaseQuery({ baseUrl })({ url, method, data, params, headers, timeout }, api, extraOptions);
+                        return axiosBaseQuery({ baseUrl })({ url, method, data, params, headers, timeout }, _api, _extraOptions);
                     }
                 }
             } catch (refreshErr) {
@@ -104,7 +105,7 @@ const axiosBaseQuery = (
 
         // 3. Error Transformation
         let transformedError: ApiError = {
-            status,
+            status: status || 0,
             code: ErrorCode.UNKNOWN,
             message: errorData?.message || err.message || 'Error communicating with server.',
             errors: errorData?.errors,

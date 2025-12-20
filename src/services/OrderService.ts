@@ -35,10 +35,10 @@ const transformOrder = (backendOrder: any): ActiveOrder => {
 };
 
 export const OrderService = {
-    getAvailableOrders: async (): Promise<ActiveOrder[]> => {
-        // Mocking location for now
-        const lat = 28.5355;
-        const lng = 77.3910;
+    getAvailableOrders: async (location?: { lat: number, lng: number } | null): Promise<ActiveOrder[]> => {
+        // Use provided location or fallback
+        const lat = location?.lat || 28.5355;
+        const lng = location?.lng || 77.3910;
         const orders = await ApiOrderService.findAvailable(lat, lng);
         return orders.map(transformOrder);
     },
