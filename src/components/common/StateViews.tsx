@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, RefreshControl, Dimensions } from 'react-native';
-import { Package, DollarSign, WifiOff, RefreshCw } from 'lucide-react-native';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { Package, DollarSign, WifiOff } from 'lucide-react-native';
+import { colors } from '@zomato/design-tokens';
 import { Button } from '@zomato/ui';
 
 // Local theme constants
