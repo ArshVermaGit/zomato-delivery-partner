@@ -10,7 +10,7 @@ interface OrderInfoCardProps {
     type: 'restaurant' | 'customer';
 }
 
-const OrderInfoCard: React.FC<OrderInfoCardProps> = ({ title, name, address, phone, type }) => {
+const OrderInfoCard = ({ title, name, address, phone }: OrderInfoCardProps) => {
 
     const handleCall = () => {
         Linking.openURL(`tel:${phone}`);

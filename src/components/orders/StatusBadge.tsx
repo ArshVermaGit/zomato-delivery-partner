@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, typography } from '@zomato/design-tokens';
+import { typography } from '@zomato/design-tokens';
 
 interface StatusBadgeProps {
     status: string;
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-    const getStatusStyle = (status: string) => {
-        const s = status.toLowerCase();
+    const getStatusStyle = (badgeStatus: string) => {
+        const s = badgeStatus.toLowerCase();
 
         // Delivered / Completed
         if (s === 'delivered' || s === 'completed') {
