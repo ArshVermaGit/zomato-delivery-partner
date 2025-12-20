@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { ActiveOrder, updateOrderStatus } from '../../../store/slices/deliverySlice';
+import { ActiveOrder, updateOrderStatusThunk } from '../../../store/slices/deliverySlice';
 import OrderInfoCard from '../../../components/orders/OrderInfoCard';
 import OrderItemsList from '../../../components/orders/OrderItemsList';
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 const AcceptedView: React.FC<Props> = ({ order }) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<any>();
 
     return (
         <View style={styles.container}>
@@ -22,7 +22,7 @@ const AcceptedView: React.FC<Props> = ({ order }) => {
                 title="PICKUP FROM"
                 name={order.restaurantName}
                 address={order.restaurantAddress}
-                phone={order.restaurantPhone}
+                phone={order.restaurantPhone || ''}
                 type="restaurant"
             />
 
@@ -31,7 +31,7 @@ const AcceptedView: React.FC<Props> = ({ order }) => {
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={styles.mainButton}
-                    onPress={() => dispatch(updateOrderStatus('ARRIVED_RESTAURANT'))}
+                    onPress={() => dispatch(updateOrderStatusThunk({ orderId: order.id, status: 'ARRIVED_RESTAURANT' }))}
                 >
                     <Text style={styles.buttonText}>I have arrived at Restaurant</Text>
                 </TouchableOpacity>

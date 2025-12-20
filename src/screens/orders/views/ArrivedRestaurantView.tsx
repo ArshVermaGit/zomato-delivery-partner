@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { ActiveOrder, updateOrderStatus } from '../../../store/slices/deliverySlice';
+import { ActiveOrder, updateOrderStatusThunk } from '../../../store/slices/deliverySlice';
 import OrderItemsList from '../../../components/orders/OrderItemsList';
 
 interface Props {
@@ -9,12 +9,12 @@ interface Props {
 }
 
 const ArrivedRestaurantView: React.FC<Props> = ({ order }) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<any>();
     const [otp, setOtp] = useState('');
 
     const handlePickup = () => {
         if (otp === order.pickupOTP) {
-            dispatch(updateOrderStatus('PICKED_UP'));
+            dispatch(updateOrderStatusThunk({ orderId: order.id, status: 'PICKED_UP' }));
         } else {
             Alert.alert('Invalid OTP', 'Please enter the correct 4-digit OTP shown in the restaurant app.');
         }

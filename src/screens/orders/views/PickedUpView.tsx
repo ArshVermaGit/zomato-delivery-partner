@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { ActiveOrder, updateOrderStatus } from '../../../store/slices/deliverySlice';
+import { ActiveOrder, updateOrderStatusThunk } from '../../../store/slices/deliverySlice';
 import OrderInfoCard from '../../../components/orders/OrderInfoCard';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const PickedUpView: React.FC<Props> = ({ order }) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<any>();
 
     return (
         <View style={styles.container}>
@@ -21,7 +21,7 @@ const PickedUpView: React.FC<Props> = ({ order }) => {
                 title="DELIVER TO"
                 name={order.customerName}
                 address={order.customerAddress}
-                phone={order.customerPhone}
+                phone={order.customerPhone || ''}
                 type="customer"
             />
 
@@ -33,7 +33,7 @@ const PickedUpView: React.FC<Props> = ({ order }) => {
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={styles.mainButton}
-                    onPress={() => dispatch(updateOrderStatus('ARRIVED_CUSTOMER'))}
+                    onPress={() => dispatch(updateOrderStatusThunk({ orderId: order.id, status: 'ARRIVED_CUSTOMER' }))}
                 >
                     <Text style={styles.buttonText}>I have arrived at Location</Text>
                 </TouchableOpacity>

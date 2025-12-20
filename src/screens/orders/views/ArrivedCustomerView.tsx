@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { ActiveOrder, completeOrder } from '../../../store/slices/deliverySlice';
+import { ActiveOrder, completeOrderThunk } from '../../../store/slices/deliverySlice';
 import { useNavigation } from '@react-navigation/native';
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const ArrivedCustomerView: React.FC<Props> = ({ order }) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<any>();
     const navigation = useNavigation<any>();
     const [otp, setOtp] = useState('');
 
@@ -19,7 +19,7 @@ const ArrivedCustomerView: React.FC<Props> = ({ order }) => {
                 {
                     text: 'Great',
                     onPress: () => {
-                        dispatch(completeOrder());
+                        dispatch(completeOrderThunk(order.id));
                         navigation.navigate('Home');
                     }
                 }

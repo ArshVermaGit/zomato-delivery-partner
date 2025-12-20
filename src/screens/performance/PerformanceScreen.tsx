@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Star, CheckCircle, Clock, Target, ThumbsUp } from 'lucide-react-native';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { Star, CheckCircle, Clock, Target } from 'lucide-react-native';
+import { colors, shadows } from '@/theme';
 
 // Local theme constants
 const spacing = { xs: 4, sm: 8, md: 12, base: 16, lg: 24, xl: 32 };
