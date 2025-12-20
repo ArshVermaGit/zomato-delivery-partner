@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { X, Zap, ZapOff, Camera } from 'lucide-react-native';
+import { X, Zap, ZapOff } from 'lucide-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,7 +13,7 @@ interface DocumentCameraProps {
 
 const DocumentCamera: React.FC<DocumentCameraProps> = ({ onCapture, onClose, title }) => {
     const [permission, requestPermission] = useCameraPermissions();
-    const [facing, setFacing] = useState<CameraType>('back');
+    const [facing] = useState<CameraType>('back');
     const [flash, setFlash] = useState<'on' | 'off'>('off');
     const cameraRef = useRef<CameraView>(null);
 
