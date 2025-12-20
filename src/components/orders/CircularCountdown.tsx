@@ -55,7 +55,7 @@ const CircularCountdown: React.FC<CircularCountdownProps> = ({
         }, 1000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [animatedValue, duration, onComplete]);
 
     const strokeDashoffset = animatedValue.interpolate({
         inputRange: [0, 1],

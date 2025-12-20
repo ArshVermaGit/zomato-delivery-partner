@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Clock, MapPin, IndianRupee } from 'lucide-react-native';
+import { MapPin } from 'lucide-react-native';
 import { ActiveOrder } from '../../store/slices/deliverySlice';
 
 interface Props {
@@ -38,7 +38,7 @@ const OrderHistoryCard: React.FC<Props> = ({ order, onPress, showStatus = true }
 
                 <View style={styles.locationRow}>
                     <MapPin size={14} color="#666" style={{ marginRight: 4 }} />
-                    <Text style={styles.location}>{order.pickupLocation} → {order.dropLocation}</Text>
+                    <Text style={styles.location}>{order.pickupLocation || 'Pickup'} → {order.dropLocation || 'Drop'}</Text>
                 </View>
             </View>
 

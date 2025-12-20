@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MapPin, Navigation, Package, DollarSign, Clock } from 'lucide-react-native';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { colors, shadows } from '@zomato/design-tokens';
 import { StatusBadge } from './StatusBadge';
 import { ActiveOrder } from '../../store/slices/deliverySlice';
 
@@ -26,14 +26,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, type, onPress, onAc
                 <LocationRow
                     icon={<MapPin size={16} color={colors.primary.zomato_red} />}
                     label={order.restaurantName}
-                    distance={order.distanceToPickup || '--'}
+                    distance={String(order.distanceToPickup || '--')}
                     isLast={false}
                 />
                 <View style={styles.locationDivider} />
                 <LocationRow
                     icon={<Navigation size={16} color={colors.secondary.gray_500} />}
                     label={order.customerName}
-                    distance={order.distanceToDrop || '--'}
+                    distance={String(order.distanceToDrop || '--')}
                     isLast={true}
                 />
             </View>

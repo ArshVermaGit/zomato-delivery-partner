@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { TrendingUp, TrendingDown, Clock } from 'lucide-react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { Transaction } from '../../store/slices/deliverySlice';
 
 interface Props {
@@ -13,7 +13,7 @@ const TransactionList: React.FC<Props> = ({ transactions, limit }) => {
 
     return (
         <View style={styles.container}>
-            {data.map((item, index) => (
+            {data.map((item) => (
                 <View key={item.id} style={styles.item}>
                     <View style={styles.iconBox}>
                         {item.type === 'PAYOUT' ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -6,32 +6,28 @@ import {
     Modal,
     TouchableOpacity,
     Vibration,
-    Platform,
-    Dimensions
+    Platform
 } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     useAnimatedProps,
     withTiming,
-    withRepeat,
     withSequence,
     runOnJS,
-    Easing,
-    FadeIn
+    Easing
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { Audio } from 'expo-av';
-import { MapPin, Navigation, DollarSign, Clock, Phone, Package, MoreVertical, X, Check } from 'lucide-react-native';
+import { MapPin, Navigation, DollarSign, Clock, Package, MoreVertical, X, Check } from 'lucide-react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
 import * as Haptics from 'expo-haptics';
 
-const { width } = Dimensions.get('window');
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 // Helper functions for earnings (mock)
-const calculateDistance = (loc1: any, loc2: any) => {
+const calculateDistance = () => {
     // Mock Haversine or similar
     return 4.2; // km
 };
@@ -46,6 +42,55 @@ export const IncomingOrderModal = ({ visible, order, onAccept, onReject }: any) 
     const progress = useSharedValue(1);
     const scale = useSharedValue(1);
     const opacity = useSharedValue(0);
+
+    // Sound & Action Handlers
+    const playAlertSound = React.useCallback(async () => {
+        try {
+            // Ensure asset exists or wrap in try/catch to avoid crash if missing
+            try {
+                const { sound: newSound } = await Audio.Sound.createAsync(
+                    require('../../assets/sounds/order-alert.mp3'),
+                    { shouldPlay: true, isLooping: true }
+                );
+                setSound(newSound);
+            } catch (e) {
+                console.warn("Sound file not found or failed to load", e);
+            }
+        } catch (error) {
+            console.error('Error playing sound:', error);
+        }
+    }, []);
+
+    const stopSound = React.useCallback(async () => {
+        if (sound) {
+            try {
+                await sound.stopAsync();
+                await sound.unloadAsync();
+            } catch (e) { console.log(e); }
+        }
+    }, [sound]);
+
+    const handleAutoReject = React.useCallback(async () => {
+        await stopSound();
+        Vibration.vibrate(1000);
+        onReject(order, 'timeout');
+    }, [order, onReject, stopSound]);
+
+    const handleAccept = React.useCallback(async () => {
+        await stopSound();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        opacity.value = withTiming(0, { duration: 200 }, () => {
+            runOnJS(onAccept)(order);
+        });
+    }, [order, onAccept, stopSound, opacity]);
+
+    const handleReject = React.useCallback(async () => {
+        await stopSound();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        opacity.value = withTiming(0, { duration: 200 }, () => {
+            runOnJS(onReject)(order);
+        });
+    }, [order, onReject, stopSound, opacity]);
 
     // Start countdown and animations
     useEffect(() => {
@@ -89,7 +134,7 @@ export const IncomingOrderModal = ({ visible, order, onAccept, onReject }: any) 
             if (interval) clearInterval(interval);
             stopSound();
         };
-    }, [visible, order]);
+    }, [visible, order, handleAutoReject, opacity, progress, scale, stopSound]);
 
     // Update progress circle
     useEffect(() => {
@@ -97,55 +142,7 @@ export const IncomingOrderModal = ({ visible, order, onAccept, onReject }: any) 
             duration: 1000,
             easing: Easing.linear,
         });
-    }, [timeLeft]);
-
-    const playAlertSound = async () => {
-        try {
-            // Ensure asset exists or wrap in try/catch to avoid crash if missing
-            try {
-                const { sound } = await Audio.Sound.createAsync(
-                    require('../../assets/sounds/order-alert.mp3'),
-                    { shouldPlay: true, isLooping: true }
-                );
-                setSound(sound);
-            } catch (e) {
-                console.warn("Sound file not found or failed to load", e);
-            }
-        } catch (error) {
-            console.error('Error playing sound:', error);
-        }
-    };
-
-    const stopSound = async () => {
-        if (sound) {
-            try {
-                await sound.stopAsync();
-                await sound.unloadAsync();
-            } catch (e) { console.log(e); }
-        }
-    };
-
-    const handleAccept = async () => {
-        await stopSound();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        opacity.value = withTiming(0, { duration: 200 }, () => {
-            runOnJS(onAccept)(order);
-        });
-    };
-
-    const handleReject = async () => {
-        await stopSound();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        opacity.value = withTiming(0, { duration: 200 }, () => {
-            runOnJS(onReject)(order);
-        });
-    };
-
-    const handleAutoReject = async () => {
-        await stopSound();
-        Vibration.vibrate(1000);
-        onReject(order, 'timeout');
-    };
+    }, [timeLeft, progress]);
 
     const modalStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
@@ -167,7 +164,7 @@ export const IncomingOrderModal = ({ visible, order, onAccept, onReject }: any) 
     const pickup = order.pickupLocation || { lat: 28.6139, lng: 77.2090 };
     const drop = order.dropLocation || { lat: 28.5355, lng: 77.3910 };
 
-    const distance = calculateDistance(pickup, drop);
+    const distance = calculateDistance();
     const estimatedEarnings = calculateEarnings(distance);
 
     return (
