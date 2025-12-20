@@ -17,6 +17,7 @@ const SOSScreen = () => {
             setStatus('SENT');
             // Dispatch/API call would happen here
         }
+        return undefined;
     }, [count, status]);
 
     const handleCancel = () => {
