@@ -1,40 +1,18 @@
+import {
+    ApiError as SharedApiError,
+    ApiResponse as SharedApiResponse,
+    ErrorCode as SharedErrorCode,
+    Order as SharedOrder
+} from '@zomato/shared-types';
+
 /**
- * Generic API Types for Zomato Delivery Ecosystem
+ * Re-exporting shared types to maintain local interface while ensuring contract sync
  */
+export type ErrorCode = SharedErrorCode;
+export const ErrorCode = SharedErrorCode;
 
-export enum ErrorCode {
-    NETWORK_ERROR = 'NETWORK_ERROR',
-    TIMEOUT = 'TIMEOUT',
-    OFFLINE = 'OFFLINE',
-    UNAUTHORIZED = 'UNAUTHORIZED',
-    FORBIDDEN = 'FORBIDDEN',
-    SERVER_ERROR = 'SERVER_ERROR',
-    UNKNOWN = 'UNKNOWN',
-}
-
-export interface ApiError {
-    status?: number;
-    code: ErrorCode;
-    message: string;
-    errors?: Record<string, string[]>;
-    timestamp: string;
-}
-
-export interface ApiResponse<T> {
-    data: T;
-    message?: string;
-    success: boolean;
-}
-
-export interface PaginatedResponse<T> {
-    data: T[];
-    meta: {
-        total: number;
-        page: number;
-        lastPage: number;
-        hasNextPage: boolean;
-    };
-}
+export type ApiError = SharedApiError;
+export type ApiResponse<T> = SharedApiResponse<T>;
 
 /**
  * Delivery Domain Types
@@ -42,22 +20,24 @@ export interface PaginatedResponse<T> {
 
 export interface DeliveryPartnerStats {
     todayEarnings: number;
+    todaysEarnings?: number; // compat
     totalDeliveries: number;
+    deliveryCount?: number; // compat
     rating: number;
     onlineTime: number; // in minutes
+    onlineHours?: number; // compat
+    avgPerDelivery?: number;
+    acceptanceRate?: number;
+    onTimeRate?: number;
+    completionRate?: number;
 }
 
-export interface ActiveOrder {
-    id: string;
-    orderNumber: string;
+export type ActiveOrder = SharedOrder & {
     customerName: string;
     customerPhone: string;
+    customerAddress: string;
+    dropLocation?: string;
     restaurantName: string;
     restaurantAddress: string;
-    deliveryAddress: string;
-    items: {
-        name: string;
-        quantity: number;
-    }[];
-    status: 'ASSIGNED' | 'PICKED_UP' | 'ARRIVED' | 'DELIVERED';
-}
+    pickupLocation?: string;
+};
