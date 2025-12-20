@@ -18,8 +18,8 @@ if (typeof process === 'undefined') {
 }
 
 // Ensure process.env exists
-if (!process.env) {
-    process.env = {};
+if (!(process as any).env) {
+    (process as any).env = {};
 }
 
 // Set NODE_ENV if not present

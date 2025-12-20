@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { loginSuccess, updateOnboardingStatus } from '../../store/slices/authSlice';
 import { AuthService } from '../../services/AuthService';
@@ -20,7 +20,7 @@ const LoginScreen = () => {
             // navigate('OTP', { phoneNumber });
 
             // For Dev/Demo without SMS Gateway:
-            const user = await AuthService.login(phoneNumber);
+            await AuthService.login(phoneNumber);
             // Status and token are handled in AuthService
 
             // Navigate based on status if needed, or let AuthStack handle it via Redux state

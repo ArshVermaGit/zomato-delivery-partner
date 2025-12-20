@@ -73,7 +73,7 @@ export const EarningsScreen = () => {
     const handleDeposit = async () => {
         try {
             const amount = 500; // Fixed amount for MVP
-            const paymentData = await initiateAdHoc({ amount, purpose: 'CASH_DEPOSIT' }).unwrap();
+            const { data: paymentData } = await initiateAdHoc({ amount, purpose: 'CASH_DEPOSIT' }).unwrap();
 
             const options = {
                 description: 'Deposit Cash Collection',

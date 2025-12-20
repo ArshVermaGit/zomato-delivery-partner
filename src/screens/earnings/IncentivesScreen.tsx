@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Award, Target, CheckCircle } from 'lucide-react-native';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { colors, shadows } from '@/theme';
 import { CircularProgress } from '../../components/common/CircularProgress';
 
 // Local theme constants

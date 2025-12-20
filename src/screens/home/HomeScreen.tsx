@@ -13,15 +13,14 @@ import { useSelector } from 'react-redux';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     FadeInDown,
-    SlideInDown
+    SlideInDown,
 } from 'react-native-reanimated';
 import {
-    Zap, ZapOff, ChevronRight, AlertCircle, MapPin,
-    MoreVertical, Navigation, ArrowRight, Star, TrendingUp,
-    Clock, Target, DollarSign, Package, Award, HelpCircle,
-    User
+    User, Zap, ZapOff, MoreVertical, ArrowRight, Award,
+    ChevronRight, AlertCircle, MapPin,
+    Star, TrendingUp,
+    Clock, Target, DollarSign, Package, HelpCircle, Navigation
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -229,17 +228,17 @@ export const DeliveryHomeScreen = ({ navigation }: MainTabScreenProps<'Home'>) =
 
                     <View style={styles.earningsAmount}>
                         <Text style={styles.currencySymbol}>₹</Text>
-                        <Text style={styles.earningsValue}>{stats?.todaysEarnings || 0}</Text>
+                        <Text style={styles.earningsValue}>{stats?.todayEarnings || 0}</Text>
                     </View>
 
                     <View style={styles.earningsStats}>
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>{stats?.deliveryCount || 0}</Text>
+                            <Text style={styles.statValue}>{stats?.totalDeliveries || 0}</Text>
                             <Text style={styles.statLabel}>Deliveries</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.stat}>
-                            <Text style={styles.statValue}>{stats?.onlineHours || 0}</Text>
+                            <Text style={styles.statValue}>{Math.round((stats?.onlineTime || 0) / 60)}</Text>
                             <Text style={styles.statLabel}>Hours Online</Text>
                         </View>
                         <View style={styles.statDivider} />
