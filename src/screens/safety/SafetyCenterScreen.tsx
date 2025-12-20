@@ -10,7 +10,7 @@ import {
     ChevronLeft,
     PhoneCall
 } from 'lucide-react-native';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { colors, shadows } from '@/theme';
 import { useNavigation } from '@react-navigation/native';
 
 // Local theme constants
@@ -51,7 +51,7 @@ const TipItem = ({ icon, text }: { icon: React.ReactNode, text: string }) => (
 
 export const SafetyCenterScreen = () => {
     const navigation = useNavigation();
-    const [emergencyContacts, setEmergencyContacts] = useState([
+    const [emergencyContacts] = useState([
         { id: '1', name: 'Priya Kumar', phone: '+91 98765 43211', relation: 'Wife' },
     ]);
 
