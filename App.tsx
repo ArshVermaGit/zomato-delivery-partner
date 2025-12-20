@@ -8,7 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { store, persistor } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
-import { ErrorBoundary } from './src/components/Common/ErrorBoundary';
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { colors } from '@/theme';
 
 /**
