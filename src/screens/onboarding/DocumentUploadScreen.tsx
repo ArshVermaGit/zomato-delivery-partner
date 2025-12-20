@@ -78,7 +78,7 @@ export const DocumentUploadScreen = () => {
     const uploadProgress = useMemo(() => {
         const uploaded = Object.values(documents).filter(Boolean).length;
         return (uploaded / documentTypes.length) * 100;
-    }, [documents]);
+    }, [documents, documentTypes.length]);
 
     const handleUpload = async (key: string, file: any) => {
         setDocuments(prev => ({ ...prev, [key]: file }));

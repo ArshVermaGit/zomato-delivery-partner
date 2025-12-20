@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Bike, Car, Truck } from 'lucide-react-native';
+import { Bike, Car } from 'lucide-react-native';
 
 const VEHICLE_TYPES = [
     { id: 'bicycle', label: 'Bicycle', icon: Bike },

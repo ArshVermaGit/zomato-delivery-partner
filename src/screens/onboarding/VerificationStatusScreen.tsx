@@ -4,11 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Animated, { ZoomIn } from 'react-native-reanimated';
 import { Clock, CheckCircle, XCircle, Check, X } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius, shadows } from '@/theme';
+import { colors, spacing, typography, borderRadius } from '@/theme';
 
 export const VerificationStatusScreen = () => {
     const navigation = useNavigation<any>();
-    const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending');
+    const [status] = useState<'pending' | 'approved' | 'rejected'>('pending');
 
     const documents = [
         { key: 'doc1', name: 'Profile Photo', status: 'approved' },

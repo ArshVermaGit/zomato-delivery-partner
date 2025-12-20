@@ -4,9 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { RootState, AppDispatch } from '../../store';
-import { acceptAvailableOrder, ActiveOrder, fetchAvailableOrders, acceptOrderThunk } from '../../store/slices/deliverySlice';
+import { fetchAvailableOrders, acceptOrderThunk } from '../../store/slices/deliverySlice';
 import { OrderCard } from '../../components/orders/OrderCard';
-import { colors, typography, shadows } from '@zomato/design-tokens';
+import { colors } from '@zomato/design-tokens';
 
 type TabType = 'available' | 'active' | 'completed';
 

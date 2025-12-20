@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     useAnimatedScrollHandler,
     interpolate,
     Extrapolate,
     SharedValue
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Clock, DollarSign, Shield, ChevronRight, Briefcase } from 'lucide-react-native';
+import { Clock, DollarSign, Shield, Briefcase } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import { useNavigation } from '@react-navigation/native';
 
@@ -81,7 +80,7 @@ export const DeliveryOnboardingScreen = () => {
         onScroll: (event) => {
             scrollX.value = event.contentOffset.x;
         },
-        onMomentumEnd: (event) => {
+        onMomentumEnd: () => {
             // Update index for button logic (rough approximation)
             // In precise impl, use ref or state updaters
         }
@@ -101,11 +100,7 @@ export const DeliveryOnboardingScreen = () => {
         navigation.navigate('DocumentUpload');
     };
 
-    const scrollToNext = () => {
-        // In a real implementation with ref to ScrollView, scroll to next
-        // keeping it simple for now, user manually swipes or we need ref
-        // For this task, assuming user swipes. If button needed, must add Ref.
-    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -125,7 +120,7 @@ export const DeliveryOnboardingScreen = () => {
                 onMomentumScrollEnd={onMomentumScrollEnd}
                 scrollEventThrottle={16}
             >
-                {slides.map((slide, index) => (
+                {slides.map((slide) => (
                     <View key={slide.id} style={styles.slide}>
                         {/* Icon Badge */}
                         <View style={[styles.iconBadge, { backgroundColor: slide.color }]}>
