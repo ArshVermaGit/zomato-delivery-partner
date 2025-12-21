@@ -1,6 +1,4 @@
 {
-  "name": "ZomatoDeliveryPartner",
-  "displayName": "Zomato Delivery Partner",
   "expo": {
     "name": "Zomato Delivery",
     "slug": "zomato-delivery-partner",
